@@ -5,10 +5,12 @@ import (
 	"CatsSocialMedia/model/dto/request"
 	"CatsSocialMedia/repository"
 	"errors"
-	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
+	"fmt"
 	"os"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService interface {
@@ -38,7 +40,8 @@ func (s *userService) Create(signupRequest request.SignupRequest) (model.User, e
 		Name:     signupRequest.Name,
 		Password: string(hash),
 	}
-
+	fmt.Println("service")
+	fmt.Println(user)
 	newUser, err := s.repository.Create(user)
 	return newUser, err
 }

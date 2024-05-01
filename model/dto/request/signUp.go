@@ -1,7 +1,7 @@
 package request
 
 type SignupRequest struct {
-	Email    string `binding:"required"`
-	Name     string `binding:"required"`
-	Password string `binding:"required"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }

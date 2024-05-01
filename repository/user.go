@@ -3,6 +3,8 @@ package repository
 import (
 	"CatsSocialMedia/model"
 	"context"
+	"fmt"
+
 	"github.com/jackc/pgx/v5"
 )
 
@@ -19,7 +21,10 @@ func NewUserRepository(db *pgx.Conn) *userRepository {
 }
 
 func (r *userRepository) Create(user model.User) (model.User, error) {
-	_, err := r.db.Exec(context.Background(), "INSERT INTO users (email, password) VALUES ($1, $2)", user.Email, user.Password)
+	fmt.Println("repo")
+	fmt.Println(user)
+	_, err := r.db.Exec(context.Background(), "INSERT INTO users (email, name, password) VALUES ($1, $2, $3)", user.Email, user.Name, user.Password)
+	fmt.Println(err)
 	if err != nil {
 		return model.User{}, err
 	}

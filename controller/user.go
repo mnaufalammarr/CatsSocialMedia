@@ -5,9 +5,10 @@ import (
 	"CatsSocialMedia/service"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"net/http"
 )
 
 type userController struct {
@@ -19,6 +20,8 @@ func NewUserController(service service.UserService) *userController {
 }
 
 func (uC *userController) Signup(c *gin.Context) {
+	fmt.Println("controller")
+	fmt.Println(uC)
 	var signupRequest request.SignupRequest
 
 	err := c.ShouldBindJSON(&signupRequest)
