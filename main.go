@@ -1,9 +1,13 @@
 package CatsSocialMedia
 
 import (
+	"CatsSocialMedia/controller"
 	"CatsSocialMedia/db"
+	"CatsSocialMedia/repository"
+	"CatsSocialMedia/service"
 	"CatsSocialMedia/utils"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"log"
 	"os"
 
@@ -32,5 +36,12 @@ func init() {
 }
 
 func main() {
+	userRepository := repository.NewUserRepository(conn)
+	userService := service.NewUserService(userRepository)
+	userController := controller.NewUserController(userService)
 
+	router := gin.Default()
+	routerV1 := router.Group("/v1")
+	routerV1.POST("/signup", userController.Signup)
+	routerV1.POST("/login", userController.SignIn)
 }
