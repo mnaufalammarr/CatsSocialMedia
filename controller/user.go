@@ -20,8 +20,6 @@ func NewUserController(service service.UserService) *userController {
 }
 
 func (uC *userController) Signup(c *gin.Context) {
-	fmt.Println("controller")
-	fmt.Println(uC)
 	var signupRequest request.SignupRequest
 
 	err := c.ShouldBindJSON(&signupRequest)
