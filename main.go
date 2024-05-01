@@ -1,10 +1,12 @@
-package CatsSocialMedia
+package main
 
 import (
 	"CatsSocialMedia/db"
+	"CatsSocialMedia/routes"
 	"CatsSocialMedia/utils"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/jackc/pgx/v5"
@@ -22,8 +24,8 @@ func init() {
 	dbHost := os.Getenv("DB_HOST")
 	dbUsername := os.Getenv("DB_USERNAME")
 	dbPassword := os.Getenv("DB_PASSWORD")
-	dbParams := os.Getenv("DB_PARAMS")
-	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?%s", dbUsername, dbPassword, dbHost, dbPort, dbName, dbParams)
+	// dbParams := os.Getenv("DB_PARAMS")
+	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", dbUsername, dbPassword, dbHost, dbPort, dbName)
 
 	conn, err = db.ConnectToDatabase(dbURL)
 	if err != nil {
@@ -32,5 +34,9 @@ func init() {
 }
 
 func main() {
-
+	fmt.Println("Starting ...")
+	router := routes.SetupRouter()
+	if err := http.ListenAndServe(":8080", router); err != nil {
+		log.Fatal(err)
+	}
 }
