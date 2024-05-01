@@ -1,13 +1,21 @@
 package main
 
 import (
+	"CatsSocialMedia/controller"
 	"CatsSocialMedia/db"
+<<<<<<< HEAD
 	"CatsSocialMedia/routes"
+=======
+	"CatsSocialMedia/repository"
+	"CatsSocialMedia/service"
+>>>>>>> master
 	"CatsSocialMedia/utils"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -34,8 +42,18 @@ func init() {
 }
 
 func main() {
-	fmt.Println("Starting ...")
-	router := routes.SetupRouter()
+	userRepository := repository.NewUserRepository(conn)
+	userService := service.NewUserService(userRepository)
+	userController := controller.NewUserController(userService)
+
+	router := gin.Default()
+	routerV1 := router.Group("/v1")
+	routerV1.GET("/", func(c *gin.Context) {
+		c.String(200, "Hello, World!")
+	})
+	routerV1.POST("/signup", userController.Signup)
+	routerV1.POST("/login", userController.SignIn)
+
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
 	}
