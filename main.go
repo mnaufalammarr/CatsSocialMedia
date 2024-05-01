@@ -3,6 +3,7 @@ package main
 import (
 	"CatsSocialMedia/controller"
 	"CatsSocialMedia/db"
+	"CatsSocialMedia/middleware"
 	"CatsSocialMedia/repository"
 	"CatsSocialMedia/service"
 	"CatsSocialMedia/utils"
@@ -42,6 +43,8 @@ func main() {
 	userService := service.NewUserService(userRepository)
 	userController := controller.NewUserController(userService)
 
+	catController := controller.NewCatController()
+
 	router := gin.Default()
 	routerV1 := router.Group("/v1")
 	routerV1.GET("/", func(c *gin.Context) {
@@ -49,6 +52,9 @@ func main() {
 	})
 	routerV1.POST("/signup", userController.Signup)
 	routerV1.POST("/login", userController.SignIn)
+
+	catRouter := routerV1.Group("/cat", middleware.RequireAuth)
+	catRouter.GET("/", catController.All)
 
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
