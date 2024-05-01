@@ -3,8 +3,9 @@ package db
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"os"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func ConnectToDatabase(urlDb string) (*pgx.Conn, error) {
@@ -14,6 +15,6 @@ func ConnectToDatabase(urlDb string) (*pgx.Conn, error) {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	defer conn.Close(context.Background())
+	// defer conn.Close(context.Background())
 	return conn, err
 }
