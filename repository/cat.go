@@ -9,6 +9,7 @@ import (
 )
 
 type CatRepository interface {
+	FindAll() ([]model.Cat, error)
 	FindByID(catID string) (model.Cat, error)
 	Create(cat model.Cat) (model.Cat, error)
 	Update(cat model.Cat) (model.Cat, error)
@@ -20,6 +21,25 @@ type catRepository struct {
 
 func NewCatRepository(db *pgx.Conn) *catRepository {
 	return &catRepository{db}
+}
+
+func (r *catRepository) FindAll() ([]model.Cat, error) {
+	rows, err := r.db.Query(context.Background(), "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var cats []model.Cat
+	for rows.Next() {
+		var cat model.Cat
+		err := rows.Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
+		if err != nil {
+			return nil, err
+		}
+		cats = append(cats, cat)
+	}
+	return cats, nil
 }
 
 func (r *catRepository) FindByID(catID string) (model.Cat, error) {

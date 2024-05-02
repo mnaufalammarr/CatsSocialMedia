@@ -26,6 +26,18 @@ func (*catController) GetAll(c *gin.Context) {
 	})
 }
 
+func (controller *catController) FindAll(c *gin.Context) {
+	cats, err := controller.catService.FindAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, cats)
+}
+
 func (controller *catController) FindByID(c *gin.Context) {
 	catID := c.Param("id")
 

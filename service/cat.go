@@ -8,6 +8,7 @@ import (
 )
 
 type CatService interface {
+	FindAll() ([]model.Cat, error)
 	FindByID(catID string) (model.Cat, error)
 	Create(catRequest request.CatRequest) (model.Cat, error)
 	Update(catID string, catRequest request.CatRequest) (model.Cat, error)
@@ -20,6 +21,14 @@ type catService struct {
 
 func NewCatService(repository repository.CatRepository) *catService {
 	return &catService{repository}
+}
+
+func (s *catService) FindAll() ([]model.Cat, error) {
+	cats, err := s.repository.FindAll()
+	if err != nil {
+		return nil, err
+	}
+	return cats, nil
 }
 
 func (s *catService) FindByID(catID string) (model.Cat, error) {

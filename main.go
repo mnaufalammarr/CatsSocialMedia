@@ -56,7 +56,7 @@ func main() {
 	routerV1.POST("/login", userController.SignIn)
 
 	catRouter := routerV1.Group("/cat", middleware.RequireAuth)
-	catRouter.GET("/", catController.GetAll)
+	catRouter.GET("/", catController.FindAll)
 	catRouter.POST("/", catController.Create)
 	catRouter.PUT("/:id", catController.Update)
 	catRouter.GET("/:id", catController.FindByID)
