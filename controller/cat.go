@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,24 @@ func NewCatController(service service.CatService) *catController {
 func (*catController) GetAll(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Cat %v created succesfully", "test"),
+	})
+}
+
+func (controller *catController) FindByUserID(c *gin.Context) {
+	jwtClaims, _ := c.Get("jwtClaims")
+	claims, _ := jwtClaims.(jwt.MapClaims)
+	userID, _ := claims["sub"].(float64)
+
+	cats, err := controller.catService.FindByUserID(int(userID))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"errors": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": cats,
 	})
 }
 
@@ -48,8 +67,11 @@ func (controller *catController) FindByID(c *gin.Context) {
 }
 
 func (controller *catController) Create(c *gin.Context) {
-	var catRequest request.CatRequest
 
+	var catRequest request.CatRequest
+	jwtClaims, _ := c.Get("jwtClaims")
+	claims, _ := jwtClaims.(jwt.MapClaims)
+	userID, _ := claims["sub"].(float64)
 	err := c.ShouldBindJSON(&catRequest)
 
 	if err != nil {
@@ -71,6 +93,7 @@ func (controller *catController) Create(c *gin.Context) {
 			return
 		}
 	}
+	catRequest.UserId = int(userID)
 	fmt.Println(catRequest)
 	cat, err := controller.catService.Create(catRequest)
 

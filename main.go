@@ -60,6 +60,7 @@ func main() {
 	catRouter.POST("/", catController.Create)
 	catRouter.PUT("/:id", catController.Update)
 	catRouter.GET("/:id", catController.FindByID)
+	catRouter.GET("/mine", catController.FindByUserID)
 	catRouter.DELETE("/:id", catController.Delete)
 
 	if err := http.ListenAndServe(":8080", router); err != nil {

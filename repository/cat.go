@@ -13,6 +13,7 @@ type CatRepository interface {
 	Create(cat model.Cat) (model.Cat, error)
 	Update(cat model.Cat) (model.Cat, error)
 	Delete(catID string) error
+	FindByUserID(i int) (model.Cat, error)
 }
 type catRepository struct {
 	db *pgx.Conn
@@ -25,6 +26,18 @@ func NewCatRepository(db *pgx.Conn) *catRepository {
 func (r *catRepository) FindByID(catID string) (model.Cat, error) {
 	var cat model.Cat
 	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE id = $1", catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Cat{}, nil // Kucing tidak ditemukan, tidak ada error
+		}
+		return model.Cat{}, err // Error lainnya
+	}
+	return cat, nil
+}
+
+func (r *catRepository) FindByUserID(i int) (model.Cat, error) {
+	var cat model.Cat
+	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE user_id = $1", i).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Cat{}, nil // Kucing tidak ditemukan, tidak ada error
