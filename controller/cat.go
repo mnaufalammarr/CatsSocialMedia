@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -27,11 +28,58 @@ func (*catController) GetAll(c *gin.Context) {
 }
 
 func (controller *catController) FindAll(c *gin.Context) {
-	cats, err := controller.catService.FindAll()
+	filterParams := make(map[string]interface{})
+
+	// Parse query parameters
+	for key, values := range c.Request.URL.Query() {
+		value := values[0] // We only use the first value if there are multiple values for the same key
+		switch key {
+		case "id":
+			filterParams["id"] = value
+		case "limit":
+			limit, err := strconv.Atoi(value)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid value for 'limit'"})
+				return
+			}
+			filterParams["limit"] = limit
+		case "offset":
+			offset, err := strconv.Atoi(value)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid value for 'offset'"})
+				return
+			}
+			filterParams["offset"] = offset
+		case "race":
+			filterParams["race"] = value
+		case "sex":
+			filterParams["sex"] = value
+		case "hasMatched":
+			hasMatched, err := strconv.ParseBool(value)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid value for 'hasMatched'"})
+				return
+			}
+			filterParams["hasMatched"] = hasMatched
+		case "ageInMonth":
+			filterParams["ageInMonth"] = value
+		case "owned":
+			owned, err := strconv.ParseBool(value)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid value for 'owned'"})
+				return
+			}
+			filterParams["owned"] = owned
+		case "search":
+			filterParams["search"] = value
+			// Add parsing for other filters similarly...
+		}
+	}
+	fmt.Println(filterParams)
+	// Call service to get cats with filters
+	cats, err := controller.catService.FindAll(filterParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal server error",
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 
