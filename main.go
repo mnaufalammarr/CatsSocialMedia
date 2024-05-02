@@ -43,7 +43,9 @@ func main() {
 	userService := service.NewUserService(userRepository)
 	userController := controller.NewUserController(userService)
 
-	catController := controller.NewCatController()
+	catRepository := repository.NewCatRepository(conn)
+	catService := service.NewCatService(catRepository)
+	catController := controller.NewCatController(catService)
 
 	router := gin.Default()
 	routerV1 := router.Group("/v1")
@@ -54,7 +56,11 @@ func main() {
 	routerV1.POST("/login", userController.SignIn)
 
 	catRouter := routerV1.Group("/cat", middleware.RequireAuth)
-	catRouter.GET("/", catController.All)
+	catRouter.GET("/", catController.GetAll)
+	catRouter.POST("/", catController.Create)
+	catRouter.PUT("/:id", catController.Update)
+	catRouter.GET("/:id", catController.FindByID)
+	catRouter.DELETE("/:id", catController.Delete)
 
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
