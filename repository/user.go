@@ -11,6 +11,7 @@ import (
 type UserRepository interface {
 	Create(user model.User) (model.User, error)
 	FindByEmail(email string) (model.User, error)
+	//IsEmailUsed(email string) (bool, error)
 	EmailIsExist(email string) bool
 }
 type userRepository struct {

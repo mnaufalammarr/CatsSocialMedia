@@ -12,6 +12,7 @@ type CatService interface {
 	Create(catRequest request.CatRequest) (model.Cat, error)
 	Update(catID string, catRequest request.CatRequest) (model.Cat, error)
 	Delete(catID string) error
+	FindByUserID(i int) (interface{}, interface{})
 }
 
 type catService struct {
@@ -25,6 +26,20 @@ func NewCatService(repository repository.CatRepository) *catService {
 func (s *catService) FindByID(catID string) (model.Cat, error) {
 	// Cari kucing berdasarkan ID
 	cat, err := s.repository.FindByID(catID)
+	if err != nil {
+		return model.Cat{}, err
+	}
+
+	// Jika kucing tidak ditemukan, kembalikan error
+	if cat.ID == 0 {
+		return model.Cat{}, errors.New("cat not found")
+	}
+
+	return cat, nil
+}
+
+func (s *catService) FindByUserID(i int) (interface{}, interface{}) {
+	cat, err := s.repository.FindByUserID(i)
 	if err != nil {
 		return model.Cat{}, err
 	}
