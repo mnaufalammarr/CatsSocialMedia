@@ -54,6 +54,7 @@ func (controller *catController) Create(c *gin.Context) {
 			})
 			return
 		}
+
 	}
 	user, err := controller.catService.Create(catRequest)
 

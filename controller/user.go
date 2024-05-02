@@ -47,6 +47,13 @@ func (uC *userController) Signup(c *gin.Context) {
 	user, err := uC.userService.Create(signupRequest)
 
 	if err != nil {
+		var error string = err.Error()
+		if error == "EMAIL ALREADY EXIST" {
+			c.JSON(http.StatusConflict, gin.H{
+				"errors": "Confilct: email already exist",
+			})
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{
 			"errors": err,
 		})
@@ -72,7 +79,7 @@ func (uC *userController) SignIn(c *gin.Context) {
 				errorMessages = append(errorMessages, errorMessage)
 			}
 			c.JSON(http.StatusBadRequest, gin.H{
-				"errors": errorMessages,
+				"errors": "errorMessages",
 			})
 			return
 		case *json.UnmarshalTypeError:
@@ -84,7 +91,6 @@ func (uC *userController) SignIn(c *gin.Context) {
 	}
 
 	tokenString, err := uC.userService.Login(loginRequest)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"errors": err.Error(),

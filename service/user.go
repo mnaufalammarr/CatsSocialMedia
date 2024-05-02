@@ -34,12 +34,20 @@ func (s *userService) Create(signupRequest request.SignupRequest) (model.User, e
 		return model.User{}, err
 	}
 
+	var isEmailExist bool = s.repository.EmailIsExist(signupRequest.Email)
+	fmt.Println(isEmailExist)
+	if isEmailExist {
+		fmt.Println("hitted error email redudant")
+		return model.User{}, errors.New("EMAIL ALREADY EXIST")
+	}
+
 	//save user
 	user := model.User{
 		Email:    signupRequest.Email,
 		Name:     signupRequest.Name,
 		Password: string(hash),
 	}
+
 	newUser, err := s.repository.Create(user)
 	return newUser, err
 }

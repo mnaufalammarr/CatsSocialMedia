@@ -3,6 +3,7 @@ package repository
 import (
 	"CatsSocialMedia/model"
 	"context"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -10,6 +11,7 @@ import (
 type UserRepository interface {
 	Create(user model.User) (model.User, error)
 	FindByEmail(email string) (model.User, error)
+	EmailIsExist(email string) bool
 }
 type userRepository struct {
 	db *pgx.Conn
@@ -34,4 +36,17 @@ func (r *userRepository) FindByEmail(email string) (model.User, error) {
 		return model.User{}, err
 	}
 	return user, nil
+}
+
+func (r *userRepository) EmailIsExist(email string) bool {
+	var exist string
+	err := r.db.QueryRow(context.Background(), "SELECT email FROM users WHERE email = $1 LIMIT 1", email).Scan(&exist)
+	fmt.Println(exist)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return false
+		}
+	}
+	return true
+
 }
