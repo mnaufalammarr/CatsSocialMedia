@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS cats (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     race VARCHAR(100),
-    sex BOOLEAN,
+    sex VARCHAR(100),
     age_in_months INT,
     description TEXT,
     image_urls TEXT[],
