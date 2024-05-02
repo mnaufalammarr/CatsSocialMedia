@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
@@ -108,8 +110,11 @@ func (controller *catController) FindByID(c *gin.Context) {
 }
 
 func (controller *catController) Create(c *gin.Context) {
-	var catRequest request.CatRequest
 
+	var catRequest request.CatRequest
+	jwtClaims, _ := c.Get("jwtClaims")
+	claims, _ := jwtClaims.(jwt.MapClaims)
+	userID, _ := claims["sub"].(float64)
 	err := c.ShouldBindJSON(&catRequest)
 
 	if err != nil {
@@ -131,6 +136,7 @@ func (controller *catController) Create(c *gin.Context) {
 			return
 		}
 	}
+	catRequest.UserId = int(userID)
 	fmt.Println(catRequest)
 	cat, err := controller.catService.Create(catRequest)
 
