@@ -1,15 +1,16 @@
 package controller
 
 import (
+	"CatsSocialMedia/model"
 	"CatsSocialMedia/model/dto/request"
+	"CatsSocialMedia/model/enum"
 	"CatsSocialMedia/service"
+	"CatsSocialMedia/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
-
-	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -23,6 +24,8 @@ func NewCatController(service service.CatService) *catController {
 	return &catController{service}
 }
 
+var ErrCatNotFound = errors.New("cat not found")
+
 func (*catController) GetAll(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Cat %v created succesfully", "test"),
@@ -31,6 +34,8 @@ func (*catController) GetAll(c *gin.Context) {
 
 func (controller *catController) FindAll(c *gin.Context) {
 	filterParams := make(map[string]interface{})
+
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
 
 	// Parse query parameters
 	for key, values := range c.Request.URL.Query() {
@@ -77,6 +82,7 @@ func (controller *catController) FindAll(c *gin.Context) {
 			// Add parsing for other filters similarly...
 		}
 	}
+	filterParams["userID"] = userID
 	fmt.Println(filterParams)
 	// Call service to get cats with filters
 	cats, err := controller.catService.FindAll(filterParams)
@@ -85,7 +91,33 @@ func (controller *catController) FindAll(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, cats)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    cats,
+	})
+}
+
+func (controller *catController) FindByUserID(c *gin.Context) {
+	// Retrieve user ID from request or any other source
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
+
+	cat, err := controller.catService.FindByUserID(userID)
+	if err != nil {
+		// Handle error
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	// Check if cat is found
+	if _, ok := cat.(model.Cat); !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Cat not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    cat,
+	})
 }
 
 func (controller *catController) FindByID(c *gin.Context) {
@@ -94,7 +126,7 @@ func (controller *catController) FindByID(c *gin.Context) {
 	// Call service to find cat by ID
 	cat, err := controller.catService.FindByID(catID)
 	if err != nil {
-		if errors.Is(err, errors.New("cat not found")) {
+		if err.Error() == ErrCatNotFound.Error() {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Cat not found",
 			})
@@ -106,15 +138,16 @@ func (controller *catController) FindByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, cat)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    cat,
+	})
 }
 
 func (controller *catController) Create(c *gin.Context) {
 
 	var catRequest request.CatRequest
-	jwtClaims, _ := c.Get("jwtClaims")
-	claims, _ := jwtClaims.(jwt.MapClaims)
-	userID, _ := claims["sub"].(float64)
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
 	err := c.ShouldBindJSON(&catRequest)
 
 	if err != nil {
@@ -135,8 +168,19 @@ func (controller *catController) Create(c *gin.Context) {
 			})
 			return
 		}
-
 	}
+
+	if !isValidRace(catRequest.Race) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid race"})
+		return
+	}
+
+	if !isValidSex(catRequest.Sex) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sex"})
+		return
+	}
+
+	fmt.Println(userID)
 	catRequest.UserId = int(userID)
 	fmt.Println(catRequest)
 	cat, err := controller.catService.Create(catRequest)
@@ -148,13 +192,29 @@ func (controller *catController) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Cat %v created succesfully", cat.Name),
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "success",
+		"data":    cat,
 	})
 }
 
 func (controller *catController) Update(c *gin.Context) {
 	catID := c.Param("id")
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
+
+	_, err := controller.catService.FindByIDAndUserID(catID, userID)
+	if err != nil {
+		if err.Error() == ErrCatNotFound.Error() {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Cat not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+		return
+	}
 
 	// Bind request body to CatRequest struct
 	var catRequest request.CatRequest
@@ -183,6 +243,16 @@ func (controller *catController) Update(c *gin.Context) {
 		}
 	}
 
+	if !isValidRace(catRequest.Race) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid race"})
+		return
+	}
+
+	if !isValidSex(catRequest.Sex) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sex"})
+		return
+	}
+
 	// Call service to update the cat
 	cat, err := controller.catService.Update(catID, catRequest)
 	if err != nil {
@@ -199,11 +269,26 @@ func (controller *catController) Update(c *gin.Context) {
 
 func (controller *catController) Delete(c *gin.Context) {
 	catID := c.Param("id")
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
 
-	// Call service to delete cat by ID
-	err := controller.catService.Delete(catID)
+	_, err := controller.catService.FindByIDAndUserID(catID, userID)
 	if err != nil {
-		if errors.Is(err, errors.New("cat not found")) {
+		if err.Error() == ErrCatNotFound.Error() {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Cat not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+		return
+	}
+
+	err = controller.catService.Delete(catID, userID)
+	fmt.Println(err)
+	if err != nil {
+		if err.Error() == ErrCatNotFound.Error() {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Cat not found",
 			})
@@ -218,4 +303,22 @@ func (controller *catController) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Cat deleted successfully",
 	})
+}
+
+func isValidRace(race enum.Race) bool {
+	switch race {
+	case enum.Persian, enum.MaineCoon, enum.Siamese, enum.Ragdoll, enum.Bengal, enum.Sphynx, enum.BritishShorthair, enum.Abyssinian, enum.ScottishFold, enum.Birman:
+		return true
+	default:
+		return false
+	}
+}
+
+func isValidSex(sex enum.Sex) bool {
+	switch sex {
+	case enum.Male, enum.Female:
+		return true
+	default:
+		return false
+	}
 }
