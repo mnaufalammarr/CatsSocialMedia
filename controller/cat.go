@@ -300,9 +300,10 @@ func (controller *catController) Delete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Cat deleted successfully",
-	})
+	// c.JSON(http.StatusOK, gin.H{
+	// 	"message": "Cat deleted successfully",
+	// })
+	c.JSON(http.StatusOK, []struct{}{})
 }
 
 func isValidRace(race enum.Race) bool {
