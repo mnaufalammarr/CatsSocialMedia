@@ -14,6 +14,7 @@ type MatchRepository interface {
 	MatchIsExist(matchId int) (model.Match, error)
 	MatchApproval(matchId int, isApprove bool) (int, error)
 	Delete(matchId int) error
+	LatestMatch(catID string) (model.Match, error)
 }
 
 type matchRepository struct {
@@ -60,4 +61,16 @@ func (r *matchRepository) Delete(matchId int) error {
 		return err
 	}
 	return nil
+}
+
+func (r *matchRepository) LatestMatch(catID string) (model.Match, error) {
+	var match model.Match
+	err := r.db.QueryRow(context.Background(), "SELECT id, match_cat_id, user_cat_id, is_approved, message, issued_by, created_at, updated_at FROM matchs WHERE match_cat_id = $1 OR user_cat_id = $1 ORDER BY id DESC LIMIT 1", catID).Scan(&match.ID, &match.MatchCatID, &match.UserCatID, &match.IsAproved, &match.Message, &match.IssuedBy, &match.CreatedAt, &match.UpdatedAt)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return model.Match{}, errors.New("MATCH IS NOT EXIST")
+		}
+	}
+	return match, nil
 }
