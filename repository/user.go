@@ -49,5 +49,4 @@ func (r *userRepository) EmailIsExist(email string) bool {
 		}
 	}
 	return true
-
 }

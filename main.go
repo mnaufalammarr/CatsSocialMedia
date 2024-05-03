@@ -48,7 +48,7 @@ func main() {
 	catController := controller.NewCatController(catService)
 
 	matchRepository := repository.NewMatchRepository(conn)
-	matchService := service.NewMatchService(matchRepository)
+	matchService := service.NewMatchService(matchRepository, catRepository)
 	matchController := controller.NewMatchController(matchService)
 
 	router := gin.Default()
@@ -64,11 +64,13 @@ func main() {
 	catRouter.POST("/", catController.Create)
 	catRouter.PUT("/:id", catController.Update)
 	catRouter.GET("/:id", catController.FindByID)
-	catRouter.GET("/mine", catController.FindByUserID)
+	// catRouter.GET("/mine", catController.FindByUserID)
 	catRouter.DELETE("/:id", catController.Delete)
 
 	matchRouter := routerV1.Group("/match", middleware.RequireAuth)
 	matchRouter.POST("/", matchController.Create)
+	matchRouter.POST("/approve", matchController.Approve)
+	matchRouter.POST("/reject", matchController.Reject)
 
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
