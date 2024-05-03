@@ -23,6 +23,8 @@ func NewCatController(service service.CatService) *catController {
 	return &catController{service}
 }
 
+var ErrCatNotFound = errors.New("cat not found")
+
 func (*catController) GetAll(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Cat %v created succesfully", "test"),
@@ -88,7 +90,10 @@ func (controller *catController) FindAll(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, cats)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    cats,
+	})
 }
 
 func (controller *catController) FindByUserID(c *gin.Context) {
@@ -108,7 +113,10 @@ func (controller *catController) FindByUserID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, cat)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    cat,
+	})
 }
 
 func (controller *catController) FindByID(c *gin.Context) {
@@ -117,7 +125,7 @@ func (controller *catController) FindByID(c *gin.Context) {
 	// Call service to find cat by ID
 	cat, err := controller.catService.FindByID(catID)
 	if err != nil {
-		if errors.Is(err, errors.New("cat not found")) {
+		if err.Error() == ErrCatNotFound.Error() {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Cat not found",
 			})
@@ -129,7 +137,10 @@ func (controller *catController) FindByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, cat)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    cat,
+	})
 }
 
 func (controller *catController) Create(c *gin.Context) {
@@ -170,8 +181,9 @@ func (controller *catController) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Cat %v created succesfully", cat.Name),
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "success",
+		"data":    cat,
 	})
 }
 
@@ -224,9 +236,8 @@ func (controller *catController) Delete(c *gin.Context) {
 	userID, _ := utils.GetUserIDFromJWTClaims(c)
 
 	_, err := controller.catService.FindByIDAndUserID(catID, userID)
-	fmt.Println(err)
 	if err != nil {
-		if errors.Is(err, errors.New("cat not found")) {
+		if err.Error() == ErrCatNotFound.Error() {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Cat not found",
 			})
@@ -241,7 +252,7 @@ func (controller *catController) Delete(c *gin.Context) {
 	err = controller.catService.Delete(catID, userID)
 	fmt.Println(err)
 	if err != nil {
-		if errors.Is(err, errors.New("cat not found")) {
+		if err.Error() == ErrCatNotFound.Error() {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Cat not found",
 			})
