@@ -3,6 +3,7 @@ package controller
 import (
 	"CatsSocialMedia/model"
 	"CatsSocialMedia/model/dto/request"
+	"CatsSocialMedia/model/enum"
 	"CatsSocialMedia/service"
 	"CatsSocialMedia/utils"
 	"encoding/json"
@@ -167,8 +168,18 @@ func (controller *catController) Create(c *gin.Context) {
 			})
 			return
 		}
-
 	}
+
+	if !isValidRace(catRequest.Race) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid race"})
+		return
+	}
+
+	if !isValidSex(catRequest.Sex) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sex"})
+		return
+	}
+
 	fmt.Println(userID)
 	catRequest.UserId = int(userID)
 	fmt.Println(catRequest)
@@ -189,6 +200,21 @@ func (controller *catController) Create(c *gin.Context) {
 
 func (controller *catController) Update(c *gin.Context) {
 	catID := c.Param("id")
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
+
+	_, err := controller.catService.FindByIDAndUserID(catID, userID)
+	if err != nil {
+		if err.Error() == ErrCatNotFound.Error() {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Cat not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+		return
+	}
 
 	// Bind request body to CatRequest struct
 	var catRequest request.CatRequest
@@ -215,6 +241,16 @@ func (controller *catController) Update(c *gin.Context) {
 			})
 			return
 		}
+	}
+
+	if !isValidRace(catRequest.Race) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid race"})
+		return
+	}
+
+	if !isValidSex(catRequest.Sex) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sex"})
+		return
 	}
 
 	// Call service to update the cat
@@ -267,4 +303,22 @@ func (controller *catController) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Cat deleted successfully",
 	})
+}
+
+func isValidRace(race enum.Race) bool {
+	switch race {
+	case enum.Persian, enum.MaineCoon, enum.Siamese, enum.Ragdoll, enum.Bengal, enum.Sphynx, enum.BritishShorthair, enum.Abyssinian, enum.ScottishFold, enum.Birman:
+		return true
+	default:
+		return false
+	}
+}
+
+func isValidSex(sex enum.Sex) bool {
+	switch sex {
+	case enum.Male, enum.Female:
+		return true
+	default:
+		return false
+	}
 }
