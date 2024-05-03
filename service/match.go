@@ -6,6 +6,7 @@ import (
 	"CatsSocialMedia/repository"
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 type MatchService interface {
@@ -23,12 +24,37 @@ func NewMatchService(repository repository.MatchRepository, catRepository reposi
 	return &matchService{repository, catRepository}
 }
 
+var ErrCatNotFound = errors.New("cat not found")
+
 func (s *matchService) Create(userId float64, matchRequest request.MatchRequest) (model.Match, error) {
 	match := model.Match{
 		MatchCatID: matchRequest.MatchCatID,
 		UserCatID:  matchRequest.UserCatID,
 		Message:    matchRequest.Message,
 		IssuedBy:   int(userId),
+	}
+
+	matchCat, matchCatError := s.catRepository.FindByID(strconv.Itoa(match.MatchCatID))
+	userCat, userCatError := s.catRepository.FindByID(strconv.Itoa(match.UserCatID))
+
+	if userCat.UserID != int(userId) {
+		return match, errors.New("THE USER CAT IS NOT BELONG TO THE USER")
+	}
+
+	if (matchCat.ID == 0 && matchCatError == nil) || (userCat.ID == 0 && userCatError == nil) {
+		return match, ErrCatNotFound
+	}
+
+	if matchCat.Sex == userCat.Sex {
+		return match, errors.New("THE CATS GENDER ARE SAME")
+	}
+
+	if matchCat.HasMatch || userCat.HasMatch {
+		return match, errors.New("THE CATS ALREADY MATCHED")
+	}
+
+	if matchCat.UserID == userCat.UserID {
+		return match, errors.New("THE CATS OWNER ARE SAME")
 	}
 
 	newMatch, err := s.repository.Create(match)

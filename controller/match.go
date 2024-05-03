@@ -48,13 +48,26 @@ func (controller *matchController) Create(c *gin.Context) {
 		}
 	}
 
-	fmt.Println("request payload")
 	fmt.Println(matchRequest)
 	match, err := controller.matchService.Create(userID, matchRequest)
 	if err != nil {
+		if err.Error() == ErrCatNotFound.Error() {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Match cat or User cat not found",
+			})
+			return
+		}
+
+		if err.Error() == "THE USER CAT IS NOT BELONG TO THE USER" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
 		fmt.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"errors": err,
+			"error": err.Error(),
 		})
 		return
 	}
