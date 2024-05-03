@@ -15,11 +15,12 @@ import (
 
 type CatRepository interface {
 	FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error)
+	FindByUserID(i int) (model.Cat, error)
 	FindByID(catID string) (model.Cat, error)
+	FindByIDAndUserID(catID string, userID int) (model.Cat, error)
 	Create(cat model.Cat) (model.Cat, error)
 	Update(cat model.Cat) (model.Cat, error)
-	Delete(catID string) error
-	FindByUserID(i int) (model.Cat, error)
+	Delete(catID string, userID int) error
 }
 type catRepository struct {
 	db *pgx.Conn
@@ -143,6 +144,18 @@ func (r *catRepository) FindByUserID(i int) (model.Cat, error) {
 	return cat, nil
 }
 
+func (r *catRepository) FindByIDAndUserID(catID string, userID int) (model.Cat, error) {
+	var cat model.Cat
+	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE user_id = $1 and id = $2", userID, catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.Cat{}, nil // Kucing tidak ditemukan, tidak ada error
+		}
+		return model.Cat{}, err // Error lainnya
+	}
+	return cat, nil
+}
+
 func (r *catRepository) Create(cat model.Cat) (model.Cat, error) {
 	_, err := r.db.Exec(context.Background(), "INSERT INTO cats (name, race, sex, age_in_months, description, image_urls, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)", cat.Name, cat.Race, cat.Sex, cat.AgeInMonths, cat.Description, cat.ImageUrls, cat.UserID)
 	if err != nil {
@@ -159,8 +172,8 @@ func (r *catRepository) Update(cat model.Cat) (model.Cat, error) {
 	return cat, nil
 }
 
-func (r *catRepository) Delete(catID string) error {
-	_, err := r.db.Exec(context.Background(), "DELETE FROM cats WHERE id = $1", catID)
+func (r *catRepository) Delete(catID string, userID int) error {
+	_, err := r.db.Exec(context.Background(), "DELETE FROM cats WHERE id = $1 and user_id = $2", catID, userID)
 	if err != nil {
 		return err
 	}

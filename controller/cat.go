@@ -93,7 +93,7 @@ func (controller *catController) FindAll(c *gin.Context) {
 
 func (controller *catController) FindByUserID(c *gin.Context) {
 	// Retrieve user ID from request or any other source
-	userID := 123 // Example: replace with actual user ID retrieval logic
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
 
 	cat, err := controller.catService.FindByUserID(userID)
 	if err != nil {
@@ -221,9 +221,25 @@ func (controller *catController) Update(c *gin.Context) {
 
 func (controller *catController) Delete(c *gin.Context) {
 	catID := c.Param("id")
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
 
-	// Call service to delete cat by ID
-	err := controller.catService.Delete(catID)
+	_, err := controller.catService.FindByIDAndUserID(catID, userID)
+	fmt.Println(err)
+	if err != nil {
+		if errors.Is(err, errors.New("cat not found")) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Cat not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+		return
+	}
+
+	err = controller.catService.Delete(catID, userID)
+	fmt.Println(err)
 	if err != nil {
 		if errors.Is(err, errors.New("cat not found")) {
 			c.JSON(http.StatusNotFound, gin.H{
