@@ -1,0 +1,14 @@
+- endpoints:
+  - cats:
+    - findAll :
+      - [x] validation
+      - [x] response
+    - create  :
+      - [x] validation
+      - [x] response
+    - update  :
+      - [_] validation - kurang validation sex
+      - [x] response
+    - delete  :
+      - [x] validation
+      - [x] response
