@@ -19,11 +19,12 @@ type CatService interface {
 }
 
 type catService struct {
-	repository repository.CatRepository
+	repository   repository.CatRepository
+	matchService MatchService
 }
 
-func NewCatService(repository repository.CatRepository) *catService {
-	return &catService{repository}
+func NewCatService(repository repository.CatRepository, matchService MatchService) *catService {
+	return &catService{repository, matchService}
 }
 
 func (s *catService) FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error) {
@@ -100,6 +101,15 @@ func (s *catService) Update(catID string, catRequest request.CatRequest) (model.
 	}
 	if existingCat.ID == 0 {
 		return model.Cat{}, errors.New("cat not found")
+	}
+
+	match, err := s.matchService.LatestMatch(catID)
+	if match.ID != 0 {
+		if match.IsAproved {
+			if existingCat.Sex != catRequest.Sex {
+				return model.Cat{}, errors.New("cat has been matched")
+			}
+		}
 	}
 
 	// Update data kucing dengan data yang diberikan dalam request

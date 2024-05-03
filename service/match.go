@@ -13,6 +13,7 @@ type MatchService interface {
 	Create(userID float64, matchRequest request.MatchRequest) (model.Match, error)
 	Approval(userId float64, matchId int, isAprrove bool) (int, error)
 	Delete(userId float64, match int) error
+	LatestMatch(catID string) (model.Match, error)
 }
 
 type matchService struct {
@@ -93,4 +94,18 @@ func (s *matchService) Approval(userId float64, matchId int, isAprrove bool) (in
 func (s *matchService) Delete(userId float64, match int) error {
 	err := s.repository.Delete(match)
 	return err
+}
+
+func (s *matchService) LatestMatch(catID string) (model.Match, error) {
+	match, err := s.repository.LatestMatch(catID)
+	if err != nil {
+		return model.Match{}, err
+	}
+
+	// Jika kucing tidak ditemukan, kembalikan error
+	if match.ID == 0 {
+		return model.Match{}, errors.New("match not found")
+	}
+
+	return match, nil
 }
