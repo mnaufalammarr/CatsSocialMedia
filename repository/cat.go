@@ -19,6 +19,7 @@ type CatRepository interface {
 	Update(cat model.Cat) (model.Cat, error)
 	Delete(catID string) error
 	FindByUserID(i int) (model.Cat, error)
+	UpdateHasMatch(id int, isHasMatch bool) (int, error)
 }
 type catRepository struct {
 	db *pgx.Conn
@@ -145,7 +146,17 @@ func (r *catRepository) Update(cat model.Cat) (model.Cat, error) {
 	if err != nil {
 		return model.Cat{}, err
 	}
+	fmt.Println("cat updeted")
 	return cat, nil
+}
+
+func (r *catRepository) UpdateHasMatch(id int, isHasMatch bool) (int, error) {
+	_, err := r.db.Exec(context.Background(), "UPDATE cats SET has_match = $1 WHERE id = $2", isHasMatch, id)
+	if err != nil {
+		return id, err
+	}
+	fmt.Println("cat updeted")
+	return id, nil
 }
 
 func (r *catRepository) Delete(catID string) error {

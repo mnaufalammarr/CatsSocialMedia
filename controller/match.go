@@ -63,3 +63,85 @@ func (controller *matchController) Create(c *gin.Context) {
 		"message": fmt.Sprintf("Cat match created succesfully, with id = %v", match.ID),
 	})
 }
+
+func (controller *matchController) Approve(c *gin.Context) {
+	var matchApproval request.MatchApprovalRequest
+	jwtClaims, _ := c.Get("jwtClaims")
+	claims, _ := jwtClaims.(jwt.MapClaims)
+	userID, _ := claims["sub"].(float64)
+	err := c.ShouldBindJSON(&matchApproval)
+
+	if err != nil {
+		switch err.(type) {
+		case validator.ValidationErrors:
+			errorMessages := []string{}
+			for _, e := range err.(validator.ValidationErrors) {
+				errorMessage := fmt.Sprintf("Error on field: %s, condition: %s", e.Field(), e.ActualTag())
+				errorMessages = append(errorMessages, errorMessage)
+			}
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": errorMessages,
+			})
+			return
+		case *json.UnmarshalTypeError:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		}
+	}
+
+	match, err := controller.matchService.Approval(userID, matchApproval.MatchID, true)
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"errors": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Cat match with matchId = %v is approved", match),
+	})
+}
+
+func (controller *matchController) Reject(c *gin.Context) {
+	var matchApproval request.MatchApprovalRequest
+	jwtClaims, _ := c.Get("jwtClaims")
+	claims, _ := jwtClaims.(jwt.MapClaims)
+	userID, _ := claims["sub"].(float64)
+	err := c.ShouldBindJSON(&matchApproval)
+
+	if err != nil {
+		switch err.(type) {
+		case validator.ValidationErrors:
+			errorMessages := []string{}
+			for _, e := range err.(validator.ValidationErrors) {
+				errorMessage := fmt.Sprintf("Error on field: %s, condition: %s", e.Field(), e.ActualTag())
+				errorMessages = append(errorMessages, errorMessage)
+			}
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": errorMessages,
+			})
+			return
+		case *json.UnmarshalTypeError:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		}
+	}
+
+	match, err := controller.matchService.Approval(userID, matchApproval.MatchID, false)
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"errors": err,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Cat match with matchId = %v is rejected", match),
+	})
+}
