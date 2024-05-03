@@ -22,6 +22,7 @@ type CatRepository interface {
 	Create(cat model.Cat) (response.CreateCatResponse, error)
 	Update(cat model.Cat) (model.Cat, error)
 	Delete(catID string, userID int) error
+	UpdateHasMatch(id int, isHasMatch bool) (int, error)
 }
 type catRepository struct {
 	db *pgx.Conn
@@ -123,7 +124,7 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 
 func (r *catRepository) FindByID(catID string) (model.Cat, error) {
 	var cat model.Cat
-	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE id = $1", catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
+	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, has_match, description, image_urls FROM cats WHERE id = $1", catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.HasMatch, &cat.Description, &cat.ImageUrls)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Cat{}, nil // Kucing tidak ditemukan, tidak ada error
@@ -183,7 +184,17 @@ func (r *catRepository) Update(cat model.Cat) (model.Cat, error) {
 	if err != nil {
 		return model.Cat{}, err
 	}
+	fmt.Println("cat updeted")
 	return cat, nil
+}
+
+func (r *catRepository) UpdateHasMatch(id int, isHasMatch bool) (int, error) {
+	_, err := r.db.Exec(context.Background(), "UPDATE cats SET has_match = $1 WHERE id = $2", isHasMatch, id)
+	if err != nil {
+		return id, err
+	}
+	fmt.Println("cat updated")
+	return id, nil
 }
 
 func (r *catRepository) Delete(catID string, userID int) error {
