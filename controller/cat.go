@@ -135,6 +135,7 @@ func (controller *catController) Create(c *gin.Context) {
 			})
 			return
 		}
+
 	}
 	catRequest.UserId = int(userID)
 	fmt.Println(catRequest)

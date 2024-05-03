@@ -1,8 +1,13 @@
 CREATE TABLE IF NOT EXISTS matchs (
     id SERIAL PRIMARY KEY,
-    match_cat_id INT REFERENCES cats(id) ON DELETE CASCADE,
-    user_cat_id INT REFERENCES cats(id) ON DELETE CASCADE,
-    has_matched BOOLEAN DEFAULT NULL,
+    match_cat_id INT NOT NULL,
+    user_cat_id INT NOT NULL,
+    is_approved BOOLEAN DEFAULT NULL,
+    message TEXT NOT NULL,
+    issued_by INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (issued_by) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (match_cat_id) REFERENCES cats(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_cat_id) REFERENCES cats(id) ON DELETE CASCADE
 );

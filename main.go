@@ -47,6 +47,10 @@ func main() {
 	catService := service.NewCatService(catRepository)
 	catController := controller.NewCatController(catService)
 
+	matchRepository := repository.NewMatchRepository(conn)
+	matchService := service.NewMatchService(matchRepository)
+	matchController := controller.NewMatchController(matchService)
+
 	router := gin.Default()
 	routerV1 := router.Group("/v1")
 	routerV1.GET("/", func(c *gin.Context) {
@@ -62,6 +66,9 @@ func main() {
 	catRouter.GET("/:id", catController.FindByID)
 	catRouter.GET("/mine", catController.FindByUserID)
 	catRouter.DELETE("/:id", catController.Delete)
+
+	matchRouter := routerV1.Group("/match", middleware.RequireAuth)
+	matchRouter.POST("/", matchController.Create)
 
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
