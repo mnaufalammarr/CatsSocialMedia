@@ -2,6 +2,7 @@ package repository
 
 import (
 	"CatsSocialMedia/model"
+	"CatsSocialMedia/model/dto/response"
 	"CatsSocialMedia/model/enum"
 	"context"
 	"errors"
@@ -13,7 +14,7 @@ import (
 )
 
 type CatRepository interface {
-	FindAll(filterParams map[string]interface{}) ([]model.Cat, error)
+	FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error)
 	FindByID(catID string) (model.Cat, error)
 	Create(cat model.Cat) (model.Cat, error)
 	Update(cat model.Cat) (model.Cat, error)
@@ -28,7 +29,7 @@ func NewCatRepository(db *pgx.Conn) *catRepository {
 	return &catRepository{db}
 }
 
-func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]model.Cat, error) {
+func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error) {
 	query := "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE 1=1"
 	var args []interface{}
 
@@ -68,7 +69,7 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]model.Ca
 
 	if owned, ok := filterParams["owned"].(bool); ok {
 		// userId := 0
-		userId := 1
+		userId := filterParams["userID"]
 		if owned {
 			query += fmt.Sprintf(" AND user_id = %d", userId)
 		} else {
@@ -96,14 +97,24 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]model.Ca
 	}
 	defer rows.Close()
 
-	var cats []model.Cat
+	var cats []response.CatResponse
 	for rows.Next() {
 		var cat model.Cat
 		err := rows.Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
 		if err != nil {
 			return nil, err
 		}
-		cats = append(cats, cat)
+		catResponse := response.CatResponse{
+			ID:          cat.ID,
+			Name:        cat.Name,
+			Race:        cat.Race,
+			Sex:         cat.Sex,
+			AgeInMonth:  cat.AgeInMonths,
+			ImageURLs:   cat.ImageUrls,
+			Description: cat.Description,
+			HasMatched:  cat.HasMatch,
+		}
+		cats = append(cats, catResponse)
 	}
 	return cats, nil
 }
@@ -133,7 +144,7 @@ func (r *catRepository) FindByUserID(i int) (model.Cat, error) {
 }
 
 func (r *catRepository) Create(cat model.Cat) (model.Cat, error) {
-	_, err := r.db.Exec(context.Background(), "INSERT INTO cats (name, race, sex, age_in_months, description, image_urls, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)", cat.Name, cat.Race, cat.Sex, cat.AgeInMonths, cat.Description, cat.ImageUrls, 1)
+	_, err := r.db.Exec(context.Background(), "INSERT INTO cats (name, race, sex, age_in_months, description, image_urls, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)", cat.Name, cat.Race, cat.Sex, cat.AgeInMonths, cat.Description, cat.ImageUrls, cat.UserID)
 	if err != nil {
 		return model.Cat{}, err
 	}

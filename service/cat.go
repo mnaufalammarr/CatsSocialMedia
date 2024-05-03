@@ -3,17 +3,18 @@ package service
 import (
 	"CatsSocialMedia/model"
 	"CatsSocialMedia/model/dto/request"
+	"CatsSocialMedia/model/dto/response"
 	"CatsSocialMedia/repository"
 	"errors"
 )
 
 type CatService interface {
-	FindAll(filterParams map[string]interface{}) ([]model.Cat, error)
+	FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error)
+	FindByUserID(i int) (interface{}, interface{})
 	FindByID(catID string) (model.Cat, error)
 	Create(catRequest request.CatRequest) (model.Cat, error)
 	Update(catID string, catRequest request.CatRequest) (model.Cat, error)
 	Delete(catID string) error
-	FindByUserID(i int) (interface{}, interface{})
 }
 
 type catService struct {
@@ -24,7 +25,7 @@ func NewCatService(repository repository.CatRepository) *catService {
 	return &catService{repository}
 }
 
-func (s *catService) FindAll(filterParams map[string]interface{}) ([]model.Cat, error) {
+func (s *catService) FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error) {
 	cats, err := s.repository.FindAll(filterParams)
 	if err != nil {
 		return nil, err
@@ -70,6 +71,7 @@ func (s *catService) Create(catRequest request.CatRequest) (model.Cat, error) {
 		AgeInMonths: catRequest.AgeInMonths,
 		Description: catRequest.Description,
 		ImageUrls:   catRequest.ImageUrls,
+		UserID:      catRequest.UserId,
 	}
 	newCat, err := s.repository.Create(cat)
 	return newCat, err
