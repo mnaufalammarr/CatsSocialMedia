@@ -106,6 +106,7 @@ func (r *matchRepository) GetMatches(userId int) ([]response.MatchResponse, erro
 			&userCat.HasMatched,
 			&userCat.CreatedAt,
 			&match.Message,
+			&match.CreatedAt,
 		)
 
 		if err != nil {

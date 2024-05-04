@@ -14,7 +14,7 @@ type MatchResponse struct {
 }
 
 type UserDetail struct {
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	CreatedAt string `json:"createdAt"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"createdAt"`
 }
