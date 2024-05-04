@@ -3,6 +3,7 @@ package repository
 import (
 	"CatsSocialMedia/model"
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
@@ -11,8 +12,8 @@ import (
 type UserRepository interface {
 	Create(user model.User) (model.User, error)
 	FindByEmail(email string) (model.User, error)
-	//IsEmailUsed(email string) (bool, error)
 	EmailIsExist(email string) bool
+	FindById(id int) (model.User, error)
 }
 type userRepository struct {
 	db *pgx.Conn
@@ -34,7 +35,10 @@ func (r *userRepository) FindByEmail(email string) (model.User, error) {
 	var user model.User
 	err := r.db.QueryRow(context.Background(), "SELECT id, email, password FROM users WHERE email = $1", email).Scan(&user.ID, &user.Email, &user.Password)
 	if err != nil {
-		return model.User{}, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.User{}, nil // Kucing tidak ditemukan, tidak ada error
+		}
+		return model.User{}, err // Error lainnya
 	}
 	return user, nil
 }
@@ -49,4 +53,16 @@ func (r *userRepository) EmailIsExist(email string) bool {
 		}
 	}
 	return true
+}
+
+func (r *userRepository) FindById(id int) (model.User, error) {
+	var user model.User
+	err := r.db.QueryRow(context.Background(), "SELECT id, email, name FROM users WHERE id = $1", id).Scan(&user.ID, &user.Email, &user.Name)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.User{}, nil // Kucing tidak ditemukan, tidak ada error
+		}
+		return model.User{}, err // Error lainnya
+	}
+	return user, nil
 }
