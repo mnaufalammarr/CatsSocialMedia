@@ -16,6 +16,7 @@ import (
 type UserService interface {
 	Create(signupRequest request.SignupRequest) (model.User, error)
 	Login(loginRequest request.SignInRequest) (string, error)
+	FindByID(id int) (model.User, error)
 }
 
 type userService struct {
@@ -57,9 +58,12 @@ func (s *userService) Login(loginRequest request.SignInRequest) (string, error) 
 	user, err := s.repository.FindByEmail(loginRequest.Email)
 
 	if err != nil {
+		fmt.Println("error", err)
 		return "", err
+
 	} else if user.ID == 0 {
-		return "", errors.New("Invalid email or password")
+		return "",
+			errors.New("Invalid email or password")
 	}
 
 	//compare password
@@ -72,7 +76,7 @@ func (s *userService) Login(loginRequest request.SignInRequest) (string, error) 
 	//sign token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.ID,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
+		"exp": time.Now().Add(time.Hour * 8).Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
@@ -82,4 +86,18 @@ func (s *userService) Login(loginRequest request.SignInRequest) (string, error) 
 	}
 
 	return tokenString, nil
+}
+
+func (s *userService) FindByID(id int) (model.User, error) {
+	user, err := s.repository.FindById(id)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	// Jika user tidak ditemukan, kembalikan error
+	if user.ID == 0 {
+		return model.User{}, errors.New("user not found")
+	}
+
+	return user, nil
 }
