@@ -73,10 +73,12 @@ func main() {
 	// catRouter.GET("/mine", catController.FindByUserID)
 	catRouter.DELETE("/:id", catController.Delete)
 
-	matchRouter := routerV1.Group("/match", middleware.RequireAuth)
+	matchRouter := catRouter.Group("/match", middleware.RequireAuth)
+	matchRouter.GET("/", matchController.GetMatches)
 	matchRouter.POST("/", matchController.Create)
 	matchRouter.POST("/approve", matchController.Approve)
 	matchRouter.POST("/reject", matchController.Reject)
+	matchRouter.DELETE("/:id", matchController.Delete)
 
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
