@@ -3,6 +3,7 @@ package service
 import (
 	"CatsSocialMedia/model"
 	"CatsSocialMedia/model/dto/request"
+	"CatsSocialMedia/model/dto/response"
 	"CatsSocialMedia/repository"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 )
 
 type MatchService interface {
+	GetMatches(userId int) ([]response.MatchResponse, error)
 	Create(userID int, matchRequest request.MatchRequest) (model.Match, error)
 	Approval(userId int, matchId int, isAprrove bool) (int, error)
 	Delete(userId int, match string) (int, error)
@@ -27,16 +29,27 @@ func NewMatchService(repository repository.MatchRepository, catRepository reposi
 
 var ErrCatNotFound = errors.New("cat not found")
 
+func (s *matchService) GetMatches(userId int) ([]response.MatchResponse, error) {
+	matches, err := s.repository.GetMatches(userId)
+
+	if err != nil {
+		return []response.MatchResponse{}, err
+	}
+
+	return matches, err
+}
+
 func (s *matchService) Create(userId int, matchRequest request.MatchRequest) (model.Match, error) {
+	matchCat, matchCatError := s.catRepository.FindByID(strconv.Itoa(matchRequest.MatchCatID))
+	userCat, userCatError := s.catRepository.FindByID(strconv.Itoa(matchRequest.UserCatID))
+
 	match := model.Match{
 		MatchCatID: matchRequest.MatchCatID,
 		UserCatID:  matchRequest.UserCatID,
 		Message:    matchRequest.Message,
 		IssuedBy:   userId,
+		AcceptedBy: matchCat.UserID,
 	}
-
-	matchCat, matchCatError := s.catRepository.FindByID(strconv.Itoa(match.MatchCatID))
-	userCat, userCatError := s.catRepository.FindByID(strconv.Itoa(match.UserCatID))
 
 	fmt.Println(userCat.UserID)
 	fmt.Println(userId)

@@ -20,6 +20,21 @@ func NewMatchController(service service.MatchService) *matchController {
 	return &matchController{service}
 }
 
+func (controller *matchController) GetMatches(c *gin.Context) {
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
+	matches, err := controller.matchService.GetMatches(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    matches,
+	})
+
+}
+
 func (controller *matchController) Create(c *gin.Context) {
 	var matchRequest request.MatchRequest
 	userID, _ := utils.GetUserIDFromJWTClaims(c)
@@ -40,6 +55,15 @@ func (controller *matchController) Create(c *gin.Context) {
 		case *json.UnmarshalTypeError:
 			c.JSON(http.StatusBadRequest, gin.H{
 				"errors": err.Error(),
+			})
+			return
+		}
+		if err != nil {
+			// If an error occurred during binding (e.g., no body provided),
+			// return a 400 Bad Request status code and an error message
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Invalid input data. Please provide a valid JSON body.",
+				"details": err.Error(),
 			})
 			return
 		}
