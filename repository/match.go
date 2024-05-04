@@ -37,7 +37,7 @@ func (r *matchRepository) Create(match model.Match) (model.Match, error) {
 }
 
 func (r *matchRepository) GetMatches(userId int) ([]response.MatchResponse, error) {
-	query := `SELECT m.id AS match_id, 
+	query := `SELECT m.id AS match_id,
 				u_issuer.name AS issuer_name,
 				u_issuer.email AS issuer_email,
 				u_issuer.created_at AS issuer_created_at,
@@ -45,7 +45,7 @@ func (r *matchRepository) GetMatches(userId int) ([]response.MatchResponse, erro
 				c_match.name AS match_cat_name,
 				c_match.race AS match_cat_race,
 				c_match.sex AS match_cat_sex,
-				c_match.age_in_months AS match_cat_age_in_month,
+				c_match.age_in_month AS match_cat_age_in_month,
 				c_match.description AS match_cat_description,
 				c_match.image_urls AS match_cat_image_urls,
 				c_match.has_match AS match_cat_has_match,
@@ -54,7 +54,7 @@ func (r *matchRepository) GetMatches(userId int) ([]response.MatchResponse, erro
 				c_user.name AS user_cat_name,
 				c_user.race AS user_cat_race,
 				c_user.sex AS user_cat_sex,
-				c_user.age_in_months AS user_cat_age_in_month,
+				c_user.age_in_month AS user_cat_age_in_month,
 				c_user.description AS user_cat_description,
 				c_user.image_urls AS user_cat_image_urls,
 				c_user.has_match AS user_cat_has_match,
@@ -62,8 +62,8 @@ func (r *matchRepository) GetMatches(userId int) ([]response.MatchResponse, erro
 				m.message AS match_message,
 				m.created_at AS match_created_at
 			FROM matchs AS m
-			JOIN users AS u_issuer ON m.issued_by = u_issuer.id 
-			JOIN cats AS c_user ON m.user_cat_id = c_user.id 
+			JOIN users AS u_issuer ON m.issued_by = u_issuer.id
+			JOIN cats AS c_user ON m.user_cat_id = c_user.id
 			JOIN cats AS c_match ON m.match_cat_id = c_match.id
 			WHERE (m.issued_by = $1 OR c_match.user_id = $1) AND m.is_matched = FALSE
 	`
