@@ -5,6 +5,7 @@ import (
 	"CatsSocialMedia/service"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -41,6 +42,17 @@ func (controller *matchController) Create(c *gin.Context) {
 			})
 			return
 		case *json.UnmarshalTypeError:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		default:
+			if err == io.EOF {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"errors": "Request body is empty",
+				})
+				return
+			}
 			c.JSON(http.StatusBadRequest, gin.H{
 				"errors": err.Error(),
 			})
@@ -101,6 +113,17 @@ func (controller *matchController) Approve(c *gin.Context) {
 				"errors": err.Error(),
 			})
 			return
+		default:
+			if err == io.EOF {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"errors": "Request body is empty",
+				})
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
 		}
 	}
 
@@ -138,6 +161,17 @@ func (controller *matchController) Reject(c *gin.Context) {
 			})
 			return
 		case *json.UnmarshalTypeError:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		default:
+			if err == io.EOF {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"errors": "Request body is empty",
+				})
+				return
+			}
 			c.JSON(http.StatusBadRequest, gin.H{
 				"errors": err.Error(),
 			})

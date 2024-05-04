@@ -6,10 +6,12 @@ import (
 	"CatsSocialMedia/utils"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	//"github.com/go-validator/validator"
 )
 
 type userController struct {
@@ -39,6 +41,18 @@ func (uC *userController) Signup(c *gin.Context) {
 			})
 			return
 		case *json.UnmarshalTypeError:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
+
+		default:
+			if err == io.EOF {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"errors": "Request body is empty",
+				})
+				return
+			}
 			c.JSON(http.StatusBadRequest, gin.H{
 				"errors": err.Error(),
 			})
@@ -95,6 +109,17 @@ func (uC *userController) SignIn(c *gin.Context) {
 			})
 			return
 		case *json.UnmarshalTypeError:
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		default:
+			if err == io.EOF {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"errors": "Request body is empty",
+				})
+				return
+			}
 			c.JSON(http.StatusBadRequest, gin.H{
 				"errors": err.Error(),
 			})

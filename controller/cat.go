@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -80,6 +81,7 @@ func (controller *catController) FindAll(c *gin.Context) {
 		case "search":
 			filterParams["search"] = value
 			// Add parsing for other filters similarly...
+
 		}
 	}
 	filterParams["userID"] = userID
@@ -167,6 +169,17 @@ func (controller *catController) Create(c *gin.Context) {
 				"errors": err.Error(),
 			})
 			return
+		default:
+			if err == io.EOF {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"errors": "Request body is empty",
+				})
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
 		}
 	}
 
@@ -236,6 +249,12 @@ func (controller *catController) Update(c *gin.Context) {
 			})
 			return
 		default:
+			if err == io.EOF {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"errors": "Request body is empty",
+				})
+				return
+			}
 			c.JSON(http.StatusBadRequest, gin.H{
 				"errors": err.Error(),
 			})

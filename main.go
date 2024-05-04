@@ -54,13 +54,9 @@ func main() {
 
 	router := gin.Default()
 	routerV1 := router.Group("/v1")
-	//routerV1.GET("/", func(c *gin.Context) {
-	//	c.String(200, "Hello, World!")
-	//})
-
-	userRouter := routerV1.Group("/user")
 
 	//user
+	userRouter := routerV1.Group("/user")
 	userRouter.POST("/register", userController.Signup)
 	userRouter.POST("/login", userController.SignIn)
 
@@ -73,7 +69,7 @@ func main() {
 	// catRouter.GET("/mine", catController.FindByUserID)
 	catRouter.DELETE("/:id", catController.Delete)
 
-	matchRouter := routerV1.Group("/match", middleware.RequireAuth)
+	matchRouter := catRouter.Group("/match", middleware.RequireAuth)
 	matchRouter.POST("/", matchController.Create)
 	matchRouter.POST("/approve", matchController.Approve)
 	matchRouter.POST("/reject", matchController.Reject)
