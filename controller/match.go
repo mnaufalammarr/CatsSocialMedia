@@ -106,7 +106,27 @@ func (controller *matchController) Approve(c *gin.Context) {
 
 	match, err := controller.matchService.Approval(userID, matchApproval.MatchID, true)
 	if err != nil {
-		fmt.Println(err)
+		if err.Error() == "MATCH DOES NOT EXIST" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"errors": "matchId is not found",
+			})
+			return
+		}
+
+		if err.Error() == "MATCHID IS NO LONGER VALID" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": "matchId is no longer valid",
+			})
+			return
+		}
+
+		if err.Error() == "THE MATCH CAT OWNER IS NOT SAME" {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"errors": "unauthorized approval match",
+			})
+			return
+		}
+
 		c.JSON(http.StatusBadRequest, gin.H{
 			"errors": err,
 		})
@@ -147,9 +167,29 @@ func (controller *matchController) Reject(c *gin.Context) {
 
 	match, err := controller.matchService.Approval(userID, matchApproval.MatchID, false)
 	if err != nil {
-		fmt.Println(err)
+		if err.Error() == "MATCH DOES NOT EXIST" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"errors": "matchId is not found",
+			})
+			return
+		}
+
+		if err.Error() == "MATCHID IS NO LONGER VALID" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errors": "matchId is no longer valid",
+			})
+			return
+		}
+
+		if err.Error() == "THE MATCH CAT OWNER IS NOT SAME" {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"errors": "unauthorized reject match",
+			})
+			return
+		}
+
 		c.JSON(http.StatusBadRequest, gin.H{
-			"errors": err,
+			"errors": err.Error(),
 		})
 		return
 	}

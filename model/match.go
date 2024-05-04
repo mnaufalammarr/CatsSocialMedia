@@ -7,5 +7,6 @@ type Match struct {
 	IssuedBy   int    `json:"issued_by"`
 	IsAproved  bool   `json:"is_approved"`
 	Message    string `json:"message"`
+	IsMatched  bool   `json:"is_matched"`
 	BaseModel
 }

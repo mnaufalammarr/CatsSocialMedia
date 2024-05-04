@@ -38,6 +38,8 @@ func (s *matchService) Create(userId float64, matchRequest request.MatchRequest)
 	matchCat, matchCatError := s.catRepository.FindByID(strconv.Itoa(match.MatchCatID))
 	userCat, userCatError := s.catRepository.FindByID(strconv.Itoa(match.UserCatID))
 
+	fmt.Println(userCat.UserID)
+	fmt.Println(userId)
 	if userCat.UserID != int(userId) {
 		return match, errors.New("THE USER CAT IS NOT BELONG TO THE USER")
 	}
@@ -73,6 +75,16 @@ func (s *matchService) Approval(userId float64, matchId int, isAprrove bool) (in
 
 	if match == (model.Match{}) {
 		return matchId, errors.New("MATCH DOES NOT EXIST")
+	}
+
+	fmt.Println(match.IsMatched)
+	if match.IsMatched {
+		return matchId, errors.New("MATCHID IS NO LONGER VALID")
+	}
+
+	matchCat, _ := s.catRepository.FindByID(strconv.Itoa(match.MatchCatID))
+	if matchCat.UserID != int(userId) {
+		return matchId, errors.New("THE MATCH CAT OWNER IS NOT SAME")
 	}
 
 	if isAprrove {

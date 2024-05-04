@@ -36,7 +36,7 @@ func (r *matchRepository) Create(match model.Match) (model.Match, error) {
 
 func (r *matchRepository) MatchIsExist(matchId int) (model.Match, error) {
 	var match model.Match
-	err := r.db.QueryRow(context.Background(), "SELECT id, match_cat_id, user_cat_id, is_approved, message, issued_by, created_at, updated_at FROM matchs WHERE id = $1 LIMIT 1", matchId).Scan(&match.ID, &match.MatchCatID, &match.UserCatID, &match.IsAproved, &match.Message, &match.IssuedBy, &match.CreatedAt, &match.UpdatedAt)
+	err := r.db.QueryRow(context.Background(), "SELECT id, match_cat_id, user_cat_id, is_approved, message, issued_by, is_matched, created_at, updated_at FROM matchs WHERE id = $1 LIMIT 1", matchId).Scan(&match.ID, &match.MatchCatID, &match.UserCatID, &match.IsAproved, &match.Message, &match.IssuedBy, &match.IsMatched, &match.CreatedAt, &match.UpdatedAt)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -47,7 +47,7 @@ func (r *matchRepository) MatchIsExist(matchId int) (model.Match, error) {
 }
 
 func (r *matchRepository) MatchApproval(matchId int, isApprove bool) (int, error) {
-	_, err := r.db.Exec(context.Background(), "UPDATE matchs SET is_approved = $1 WHERE id = $2", isApprove, matchId)
+	_, err := r.db.Exec(context.Background(), "UPDATE matchs SET is_approved = $1, is_matched = TRUE WHERE id = $2", isApprove, matchId)
 
 	if err != nil {
 		return matchId, err

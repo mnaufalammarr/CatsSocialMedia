@@ -124,7 +124,7 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 
 func (r *catRepository) FindByID(catID string) (model.Cat, error) {
 	var cat model.Cat
-	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, has_match, description, image_urls FROM cats WHERE id = $1", catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.HasMatch, &cat.Description, &cat.ImageUrls)
+	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, has_match, description, image_urls, user_id FROM cats WHERE id = $1", catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.HasMatch, &cat.Description, &cat.ImageUrls, &cat.UserID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Cat{}, nil // Kucing tidak ditemukan, tidak ada error
