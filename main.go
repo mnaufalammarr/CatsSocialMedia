@@ -40,16 +40,17 @@ func init() {
 
 func main() {
 	userRepository := repository.NewUserRepository(conn)
+	catRepository := repository.NewCatRepository(conn)
+	matchRepository := repository.NewMatchRepository(conn)
+
 	userService := service.NewUserService(userRepository)
 	userController := controller.NewUserController(userService)
 
-	catRepository := repository.NewCatRepository(conn)
-	catService := service.NewCatService(catRepository)
-	catController := controller.NewCatController(catService)
-
-	matchRepository := repository.NewMatchRepository(conn)
-	matchService := service.NewMatchService(matchRepository)
+	matchService := service.NewMatchService(matchRepository, catRepository)
 	matchController := controller.NewMatchController(matchService)
+
+	catService := service.NewCatService(catRepository, matchService)
+	catController := controller.NewCatController(catService)
 
 	router := gin.Default()
 	routerV1 := router.Group("/v1")
@@ -64,11 +65,13 @@ func main() {
 	catRouter.POST("/", catController.Create)
 	catRouter.PUT("/:id", catController.Update)
 	catRouter.GET("/:id", catController.FindByID)
-	catRouter.GET("/mine", catController.FindByUserID)
+	// catRouter.GET("/mine", catController.FindByUserID)
 	catRouter.DELETE("/:id", catController.Delete)
 
 	matchRouter := routerV1.Group("/match", middleware.RequireAuth)
 	matchRouter.POST("/", matchController.Create)
+	matchRouter.POST("/approve", matchController.Approve)
+	matchRouter.POST("/reject", matchController.Reject)
 
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
