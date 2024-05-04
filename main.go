@@ -72,6 +72,7 @@ func main() {
 	matchRouter.POST("/", matchController.Create)
 	matchRouter.POST("/approve", matchController.Approve)
 	matchRouter.POST("/reject", matchController.Reject)
+	matchRouter.DELETE("/:id", matchController.Delete)
 
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)

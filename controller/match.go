@@ -3,11 +3,10 @@ package controller
 import (
 	"CatsSocialMedia/model/dto/request"
 	"CatsSocialMedia/service"
+	"CatsSocialMedia/utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -23,9 +22,7 @@ func NewMatchController(service service.MatchService) *matchController {
 
 func (controller *matchController) Create(c *gin.Context) {
 	var matchRequest request.MatchRequest
-	jwtClaims, _ := c.Get("jwtClaims")
-	claims, _ := jwtClaims.(jwt.MapClaims)
-	userID, _ := claims["sub"].(float64)
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
 	err := c.ShouldBindJSON(&matchRequest)
 
 	if err != nil {
@@ -72,16 +69,14 @@ func (controller *matchController) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusCreated, gin.H{
 		"message": fmt.Sprintf("Cat match created succesfully, with id = %v", match.ID),
 	})
 }
 
 func (controller *matchController) Approve(c *gin.Context) {
 	var matchApproval request.MatchApprovalRequest
-	jwtClaims, _ := c.Get("jwtClaims")
-	claims, _ := jwtClaims.(jwt.MapClaims)
-	userID, _ := claims["sub"].(float64)
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
 	err := c.ShouldBindJSON(&matchApproval)
 
 	if err != nil {
@@ -106,7 +101,7 @@ func (controller *matchController) Approve(c *gin.Context) {
 
 	match, err := controller.matchService.Approval(userID, matchApproval.MatchID, true)
 	if err != nil {
-		if err.Error() == "MATCH DOES NOT EXIST" {
+		if err.Error() == "MATCH IS NOT EXIST" {
 			c.JSON(http.StatusNotFound, gin.H{
 				"errors": "matchId is not found",
 			})
@@ -140,9 +135,7 @@ func (controller *matchController) Approve(c *gin.Context) {
 
 func (controller *matchController) Reject(c *gin.Context) {
 	var matchApproval request.MatchApprovalRequest
-	jwtClaims, _ := c.Get("jwtClaims")
-	claims, _ := jwtClaims.(jwt.MapClaims)
-	userID, _ := claims["sub"].(float64)
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
 	err := c.ShouldBindJSON(&matchApproval)
 
 	if err != nil {
@@ -167,7 +160,7 @@ func (controller *matchController) Reject(c *gin.Context) {
 
 	match, err := controller.matchService.Approval(userID, matchApproval.MatchID, false)
 	if err != nil {
-		if err.Error() == "MATCH DOES NOT EXIST" {
+		if err.Error() == "MATCH IS NOT EXIST" {
 			c.JSON(http.StatusNotFound, gin.H{
 				"errors": "matchId is not found",
 			})
@@ -196,5 +189,41 @@ func (controller *matchController) Reject(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("Cat match with matchId = %v is rejected", match),
+	})
+}
+
+func (controller *matchController) Delete(c *gin.Context) {
+	matchId := c.Param("id")
+	userId, _ := utils.GetUserIDFromJWTClaims(c)
+
+	_, err := controller.matchService.Delete(userId, matchId)
+	if err != nil {
+		if err.Error() == "MATCH IS NOT EXIST" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Match not found",
+			})
+			return
+		}
+		if err.Error() == "UNAUTHORIZED DELETE THIS MATCH" {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Unathorized delete match",
+			})
+			return
+		}
+
+		if err.Error() == "MATCHID IS ALREADY APPROVED / REJECT" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "matchId is already approved / reject",
+			})
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Match with matchId %s deleted successfully", matchId),
 	})
 }

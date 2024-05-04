@@ -36,8 +36,9 @@ func (r *matchRepository) Create(match model.Match) (model.Match, error) {
 
 func (r *matchRepository) MatchIsExist(matchId int) (model.Match, error) {
 	var match model.Match
-	err := r.db.QueryRow(context.Background(), "SELECT id, match_cat_id, user_cat_id, is_approved, message, issued_by, is_matched, created_at, updated_at FROM matchs WHERE id = $1 LIMIT 1", matchId).Scan(&match.ID, &match.MatchCatID, &match.UserCatID, &match.IsAproved, &match.Message, &match.IssuedBy, &match.IsMatched, &match.CreatedAt, &match.UpdatedAt)
+	err := r.db.QueryRow(context.Background(), "SELECT id, match_cat_id, user_cat_id, message, issued_by, is_matched, created_at, updated_at, is_approved FROM matchs WHERE id = $1 LIMIT 1", matchId).Scan(&match.ID, &match.MatchCatID, &match.UserCatID, &match.Message, &match.IssuedBy, &match.IsMatched, &match.CreatedAt, &match.UpdatedAt, &match.IsAproved)
 
+	fmt.Println(match)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return model.Match{}, errors.New("MATCH IS NOT EXIST")
