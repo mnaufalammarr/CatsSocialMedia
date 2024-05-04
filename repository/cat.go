@@ -35,9 +35,10 @@ func NewCatRepository(db *pgx.Conn) *catRepository {
 func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error) {
 	query := "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE 1=1"
 	var args []interface{}
+	fmt.Println(args...)
 
 	if catID, ok := filterParams["id"].(string); ok && catID != "" {
-		query += " AND id = $1"
+		query += fmt.Sprintf(" AND id = '%s'", catID)
 		args = append(args, catID)
 	}
 
@@ -85,17 +86,18 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 	}
 
 	if limit, ok := filterParams["limit"].(int); ok && limit > 0 {
-		query += " LIMIT $2"
+		query += fmt.Sprintf(" LIMIT %d", limit)
 		args = append(args, limit)
 	}
 
 	if offset, ok := filterParams["offset"].(int); ok && offset >= 0 {
-		query += " OFFSET $3"
+		query += fmt.Sprintf(" OFFSET %d", offset)
 		args = append(args, offset)
 	}
 	fmt.Println(query)
 	rows, err := r.db.Query(context.Background(), query, args...)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -105,6 +107,7 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 		var cat model.Cat
 		err := rows.Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
 		if err != nil {
+			fmt.Println(err)
 			return nil, err
 		}
 		catResponse := response.CatResponse{
