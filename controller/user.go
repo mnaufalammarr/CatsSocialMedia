@@ -3,6 +3,7 @@ package controller
 import (
 	"CatsSocialMedia/model/dto/request"
 	"CatsSocialMedia/service"
+	"CatsSocialMedia/utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,6 +22,7 @@ func NewUserController(service service.UserService) *userController {
 
 func (uC *userController) Signup(c *gin.Context) {
 	var signupRequest request.SignupRequest
+	//var loginRequest request.SignInRequest
 
 	err := c.ShouldBindJSON(&signupRequest)
 
@@ -54,14 +56,24 @@ func (uC *userController) Signup(c *gin.Context) {
 			})
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{
-			"errors": err,
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("User %v created succesfully", user.Email),
+	loginRequest := request.SignInRequest{
+		Email:    signupRequest.Email,
+		Password: signupRequest.Password,
+	}
+
+	tokenString, err := uC.userService.Login(loginRequest)
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "User Registered Successfully",
+		"data": map[string]string{
+			"email": user.Email,
+			"name":  user.Name,
+			"token": tokenString,
+		},
 	})
 }
 
@@ -79,7 +91,7 @@ func (uC *userController) SignIn(c *gin.Context) {
 				errorMessages = append(errorMessages, errorMessage)
 			}
 			c.JSON(http.StatusBadRequest, gin.H{
-				"errors": "errorMessages",
+				"errors": errorMessages,
 			})
 			return
 		case *json.UnmarshalTypeError:
@@ -92,14 +104,26 @@ func (uC *userController) SignIn(c *gin.Context) {
 
 	tokenString, err := uC.userService.Login(loginRequest)
 	if err != nil {
+		if err.Error() == "Invalid email or password" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"errors": "Invalid email or password",
+			})
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{
 			"errors": err.Error(),
 		})
 		return
 	}
 
+	userId, _ := utils.GetUserIDFromJWT(tokenString)
+	user, err := uC.userService.FindByID(userId)
+
 	c.JSON(http.StatusOK, gin.H{
+		"message": "User Logged Successfully",
 		"data": map[string]string{
+			"email": user.Email,
+			"name":  user.Name,
 			"token": tokenString,
 		},
 	})
