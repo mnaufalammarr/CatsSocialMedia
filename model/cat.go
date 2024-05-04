@@ -7,7 +7,7 @@ type Cat struct {
 	Name        string    `json:"name"`
 	Race        enum.Race `json:"race"`
 	Sex         enum.Sex  `json:"sex"`
-	AgeInMonths int       `json:"age_in_months"`
+	AgeInMonth  int       `json:"age_in_month"`
 	Description string    `json:"description"`
 	ImageUrls   []string  `json:"image_urls"`
 	UserID      int       `json:"user_id"` // Foreign key referencing User
