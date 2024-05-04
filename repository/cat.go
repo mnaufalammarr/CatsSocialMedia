@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -18,9 +19,10 @@ type CatRepository interface {
 	FindByUserID(i int) (model.Cat, error)
 	FindByID(catID string) (model.Cat, error)
 	FindByIDAndUserID(catID string, userID int) (model.Cat, error)
-	Create(cat model.Cat) (model.Cat, error)
+	Create(cat model.Cat) (response.CreateCatResponse, error)
 	Update(cat model.Cat) (model.Cat, error)
 	Delete(catID string, userID int) error
+	UpdateHasMatch(id int, isHasMatch bool) (int, error)
 }
 type catRepository struct {
 	db *pgx.Conn
@@ -122,7 +124,7 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 
 func (r *catRepository) FindByID(catID string) (model.Cat, error) {
 	var cat model.Cat
-	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE id = $1", catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
+	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, has_match, description, image_urls, user_id FROM cats WHERE id = $1", catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.HasMatch, &cat.Description, &cat.ImageUrls, &cat.UserID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Cat{}, nil // Kucing tidak ditemukan, tidak ada error
@@ -135,6 +137,7 @@ func (r *catRepository) FindByID(catID string) (model.Cat, error) {
 func (r *catRepository) FindByUserID(i int) (model.Cat, error) {
 	var cat model.Cat
 	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE user_id = $1", i).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
+	fmt.Println(err)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Cat{}, nil // Kucing tidak ditemukan, tidak ada error
@@ -156,12 +159,24 @@ func (r *catRepository) FindByIDAndUserID(catID string, userID int) (model.Cat, 
 	return cat, nil
 }
 
-func (r *catRepository) Create(cat model.Cat) (model.Cat, error) {
-	_, err := r.db.Exec(context.Background(), "INSERT INTO cats (name, race, sex, age_in_months, description, image_urls, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)", cat.Name, cat.Race, cat.Sex, cat.AgeInMonths, cat.Description, cat.ImageUrls, cat.UserID)
+func (r *catRepository) Create(cat model.Cat) (response.CreateCatResponse, error) {
+	var id string
+	var createdAt time.Time
+	err := r.db.QueryRow(context.Background(), "INSERT INTO cats (name, race, sex, age_in_months, description, image_urls, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, created_at", cat.Name, cat.Race, cat.Sex, cat.AgeInMonths, cat.Description, cat.ImageUrls, cat.UserID).Scan(&id, &createdAt)
 	if err != nil {
-		return model.Cat{}, err
+		return response.CreateCatResponse{}, err
 	}
-	return cat, nil
+
+	// Konversi waktu pembuatan ke format ISO 8601
+	createdAtISO8601 := createdAt.Format(time.RFC3339)
+
+	// Buat respons yang akan dikirimkan kembali
+	response := response.CreateCatResponse{
+		ID:        id,
+		CreatedAt: createdAtISO8601,
+	}
+
+	return response, nil
 }
 
 func (r *catRepository) Update(cat model.Cat) (model.Cat, error) {
@@ -169,7 +184,17 @@ func (r *catRepository) Update(cat model.Cat) (model.Cat, error) {
 	if err != nil {
 		return model.Cat{}, err
 	}
+	fmt.Println("cat updeted")
 	return cat, nil
+}
+
+func (r *catRepository) UpdateHasMatch(id int, isHasMatch bool) (int, error) {
+	_, err := r.db.Exec(context.Background(), "UPDATE cats SET has_match = $1 WHERE id = $2", isHasMatch, id)
+	if err != nil {
+		return id, err
+	}
+	fmt.Println("cat updated")
+	return id, nil
 }
 
 func (r *catRepository) Delete(catID string, userID int) error {

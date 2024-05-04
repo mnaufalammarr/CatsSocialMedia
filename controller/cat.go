@@ -3,6 +3,7 @@ package controller
 import (
 	"CatsSocialMedia/model"
 	"CatsSocialMedia/model/dto/request"
+	"CatsSocialMedia/model/enum"
 	"CatsSocialMedia/service"
 	"CatsSocialMedia/utils"
 	"encoding/json"
@@ -22,6 +23,8 @@ type catController struct {
 func NewCatController(service service.CatService) *catController {
 	return &catController{service}
 }
+
+var ErrCatNotFound = errors.New("cat not found")
 
 func (*catController) GetAll(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
@@ -88,7 +91,10 @@ func (controller *catController) FindAll(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, cats)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    cats,
+	})
 }
 
 func (controller *catController) FindByUserID(c *gin.Context) {
@@ -108,7 +114,10 @@ func (controller *catController) FindByUserID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, cat)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    cat,
+	})
 }
 
 func (controller *catController) FindByID(c *gin.Context) {
@@ -117,7 +126,7 @@ func (controller *catController) FindByID(c *gin.Context) {
 	// Call service to find cat by ID
 	cat, err := controller.catService.FindByID(catID)
 	if err != nil {
-		if errors.Is(err, errors.New("cat not found")) {
+		if err.Error() == ErrCatNotFound.Error() {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Cat not found",
 			})
@@ -129,7 +138,10 @@ func (controller *catController) FindByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, cat)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    cat,
+	})
 }
 
 func (controller *catController) Create(c *gin.Context) {
@@ -156,8 +168,18 @@ func (controller *catController) Create(c *gin.Context) {
 			})
 			return
 		}
-
 	}
+
+	if !isValidRace(catRequest.Race) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid race"})
+		return
+	}
+
+	if !isValidSex(catRequest.Sex) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sex"})
+		return
+	}
+
 	fmt.Println(userID)
 	catRequest.UserId = int(userID)
 	fmt.Println(catRequest)
@@ -170,13 +192,29 @@ func (controller *catController) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Cat %v created succesfully", cat.Name),
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "success",
+		"data":    cat,
 	})
 }
 
 func (controller *catController) Update(c *gin.Context) {
 	catID := c.Param("id")
+	userID, _ := utils.GetUserIDFromJWTClaims(c)
+
+	_, err := controller.catService.FindByIDAndUserID(catID, userID)
+	if err != nil {
+		if err.Error() == ErrCatNotFound.Error() {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Cat not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+		return
+	}
 
 	// Bind request body to CatRequest struct
 	var catRequest request.CatRequest
@@ -205,6 +243,16 @@ func (controller *catController) Update(c *gin.Context) {
 		}
 	}
 
+	if !isValidRace(catRequest.Race) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid race"})
+		return
+	}
+
+	if !isValidSex(catRequest.Sex) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid sex"})
+		return
+	}
+
 	// Call service to update the cat
 	cat, err := controller.catService.Update(catID, catRequest)
 	if err != nil {
@@ -224,9 +272,8 @@ func (controller *catController) Delete(c *gin.Context) {
 	userID, _ := utils.GetUserIDFromJWTClaims(c)
 
 	_, err := controller.catService.FindByIDAndUserID(catID, userID)
-	fmt.Println(err)
 	if err != nil {
-		if errors.Is(err, errors.New("cat not found")) {
+		if err.Error() == ErrCatNotFound.Error() {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Cat not found",
 			})
@@ -241,7 +288,7 @@ func (controller *catController) Delete(c *gin.Context) {
 	err = controller.catService.Delete(catID, userID)
 	fmt.Println(err)
 	if err != nil {
-		if errors.Is(err, errors.New("cat not found")) {
+		if err.Error() == ErrCatNotFound.Error() {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Cat not found",
 			})
@@ -253,7 +300,26 @@ func (controller *catController) Delete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Cat deleted successfully",
-	})
+	// c.JSON(http.StatusOK, gin.H{
+	// 	"message": "Cat deleted successfully",
+	// })
+	c.JSON(http.StatusOK, []struct{}{})
+}
+
+func isValidRace(race enum.Race) bool {
+	switch race {
+	case enum.Persian, enum.MaineCoon, enum.Siamese, enum.Ragdoll, enum.Bengal, enum.Sphynx, enum.BritishShorthair, enum.Abyssinian, enum.ScottishFold, enum.Birman:
+		return true
+	default:
+		return false
+	}
+}
+
+func isValidSex(sex enum.Sex) bool {
+	switch sex {
+	case enum.Male, enum.Female:
+		return true
+	default:
+		return false
+	}
 }

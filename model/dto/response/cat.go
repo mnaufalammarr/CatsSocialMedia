@@ -16,3 +16,8 @@ type CatResponse struct {
 	HasMatched  bool      `json:"hasMatched"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
+
+type CreateCatResponse struct {
+	ID        string `json:"id"`
+	CreatedAt string `json:"createdAt"`
+}
