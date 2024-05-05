@@ -22,7 +22,7 @@ type CatRepository interface {
 	Create(cat model.Cat) (response.CreateCatResponse, error)
 	Update(cat model.Cat) (model.Cat, error)
 	Delete(catID string, userID int) error
-	UpdateHasMatch(id int, isHasMatch bool) (int, error)
+	UpdateHasMatch(id string, isHasMatch bool) (string, error)
 }
 type catRepository struct {
 	db *pgx.Conn
@@ -123,7 +123,7 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 		}
 		// createdAtISO8601 := cat.CreatedAt.Format(time.RFC3339)
 		catResponse := response.CatResponse{
-			ID:          cat.ID,
+			ID:          strconv.Itoa(cat.ID),
 			Name:        cat.Name,
 			Race:        cat.Race,
 			Sex:         cat.Sex,
@@ -207,7 +207,7 @@ func (r *catRepository) Update(cat model.Cat) (model.Cat, error) {
 	return cat, nil
 }
 
-func (r *catRepository) UpdateHasMatch(id int, isHasMatch bool) (int, error) {
+func (r *catRepository) UpdateHasMatch(id string, isHasMatch bool) (string, error) {
 	_, err := r.db.Exec(context.Background(), "UPDATE cats SET has_match = $1 WHERE id = $2", isHasMatch, id)
 	if err != nil {
 		return id, err
