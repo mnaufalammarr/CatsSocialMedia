@@ -36,23 +36,31 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 	query := "SELECT id, name, race, sex, age_in_month, description, image_urls, created_at FROM cats WHERE 1=1"
 	var args []interface{}
 	fmt.Println(args...)
+	num := 1
 
 	if catID, ok := filterParams["id"].(string); ok && catID != "" {
-		query += fmt.Sprintf(" AND id = '%s'", catID)
+		query += " AND id = $" + strconv.Itoa(num)
+		num++
 		args = append(args, catID)
 	}
 
 	if race, ok := filterParams["race"].(string); ok && race != "" {
-		query += fmt.Sprintf(" AND race = '%s'", race)
+		query += " AND race = $" + strconv.Itoa(num)
+		args = append(args, race)
+		num++
 	}
 
 	if sexStr, ok := filterParams["sex"].(string); ok && sexStr != "" {
 		sex := enum.Sex(sexStr)
-		query += fmt.Sprintf(" AND sex = '%s'", sex)
+		query += " AND sex = $" + strconv.Itoa(num)
+		args = append(args, sex)
+		num++
 	}
 
 	if hasMatched, ok := filterParams["hasMatched"].(bool); ok {
-		query += fmt.Sprintf(" AND has_match = %t", hasMatched)
+		query += " AND has_match = $" + strconv.Itoa(num)
+		args = append(args, hasMatched)
+		num++
 	}
 
 	if ageInMonth, ok := filterParams["ageInMonth"].(string); ok && ageInMonth != "" {
@@ -75,26 +83,27 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 		// userId := 0
 		userId := filterParams["userID"]
 		if owned {
-			query += fmt.Sprintf(" AND user_id = %d", userId)
+			query += " AND user_id = $" + strconv.Itoa(num)
 		} else {
-			query += fmt.Sprintf(" AND user_id != %d", userId)
+			query += " AND user_id  = $" + strconv.Itoa(num)
 		}
+		args = append(args, userId)
+		num++
 	}
 
 	if search, ok := filterParams["search"].(string); ok && search != "" {
-		query += fmt.Sprintf(" AND name ILIKE '%%%s%%'", search)
+		query += " AND name ILIKE '%%$" + strconv.Itoa(num) + "%%'"
+		num++
 	}
 
 	query += (" ORDER BY id DESC ")
 
 	if limit, ok := filterParams["limit"].(int); ok && limit > 0 {
-		query += fmt.Sprintf(" LIMIT %d", limit)
-		args = append(args, limit)
+		query += " LIMIT " + strconv.Itoa(limit)
 	}
 
 	if offset, ok := filterParams["offset"].(int); ok && offset >= 0 {
-		query += fmt.Sprintf(" OFFSET %d", offset)
-		args = append(args, offset)
+		query += " OFFSET  " + strconv.Itoa(offset)
 	}
 	fmt.Println(query)
 	rows, err := r.db.Query(context.Background(), query, args...)
