@@ -2,6 +2,7 @@ package response
 
 import (
 	"CatsSocialMedia/model/enum"
+	"time"
 )
 
 type CatResponse struct {
@@ -13,10 +14,10 @@ type CatResponse struct {
 	ImageURLs   []string  `json:"imageUrls"`
 	Description string    `json:"description"`
 	HasMatched  bool      `json:"hasMatched"`
-	CreatedAt   string    `json:"createdAt"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
 type CreateCatResponse struct {
-	ID        string `json:"id"`
-	CreatedAt string `json:"createdAt"`
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
 }

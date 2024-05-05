@@ -69,9 +69,9 @@ func (s *matchService) Create(userId int, matchRequest request.MatchRequest) (mo
 		return match, errors.New("THE CATS ALREADY MATCHED")
 	}
 
-	if matchCat.UserID == userCat.UserID {
-		return match, errors.New("THE CATS OWNER ARE SAME")
-	}
+	// if matchCat.UserID == userCat.UserID {
+	// 	return match, errors.New("THE CATS OWNER ARE SAME")
+	// }
 
 	newMatch, err := s.repository.Create(match)
 	return newMatch, err
