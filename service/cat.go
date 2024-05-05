@@ -7,6 +7,8 @@ import (
 	"CatsSocialMedia/repository"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 type CatService interface {
@@ -17,6 +19,7 @@ type CatService interface {
 	Create(catRequest request.CatRequest) (response.CreateCatResponse, error)
 	Update(catID string, catRequest request.CatRequest) (model.Cat, error)
 	Delete(catID string, userID int) error
+	ConverToString(cat []response.CatResponse) []response.CatResponseString
 }
 
 type catService struct {
@@ -28,13 +31,14 @@ func NewCatService(repository repository.CatRepository, matchService MatchServic
 	return &catService{repository, matchService}
 }
 
-func (s *catService) FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error) {
+func (s *catService) FindAll(filterParams map[string]interface{}) ([]response.CatResponseString, error) {
 	fmt.Println(filterParams)
 	cats, err := s.repository.FindAll(filterParams)
 	if err != nil {
 		return nil, err
 	}
-	return cats, nil
+	catString := s.CovertToString(cats)
+	return catString, nil
 }
 
 func (s *catService) FindByID(catID string) (model.Cat, error) {
@@ -134,4 +138,23 @@ func (s *catService) Update(catID string, catRequest request.CatRequest) (model.
 func (s *catService) Delete(catID string, userID int) error {
 	err := s.repository.Delete(catID, userID)
 	return err
+}
+
+func (s *catService) CovertToString(cat []response.CatResponse) []response.CatResponseString {
+	var cats []response.CatResponseString
+	for _, v := range cat {
+		catString := response.CatResponseString{
+			ID:          string(v.ID),
+			Name:        v.Name,
+			Race:        string(v.Race),
+			Sex:         string(v.Sex),
+			AgeInMonth:  strconv.Itoa(v.AgeInMonth),
+			ImageURLs:   strings.Join(v.ImageURLs, ","),
+			Description: v.Description,
+			HasMatched:  strconv.FormatBool(v.HasMatched),
+			CreatedAt:   v.CreatedAt.String(),
+		}
+		cats = append(cats, catString)
+	}
+	return cats
 }

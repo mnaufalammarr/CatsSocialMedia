@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -161,7 +162,17 @@ func (controller *catController) FindByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "success",
-		"data":    cat,
+		"data": map[string]string{
+			"id":          strconv.Itoa(cat.ID),
+			"name":        cat.Name,
+			"race":        string(cat.Race),
+			"sex":         string(cat.Sex),
+			"ageInMonth":  strconv.Itoa(cat.AgeInMonth),
+			"imageUrls":   strings.Join(cat.ImageUrls, ","),
+			"description": cat.Description,                  // not null, minLength 1, maxLength 200
+			"hasMatched":  strconv.FormatBool(cat.HasMatch), // true if the cat is already matched
+			"createdAt":   cat.CreatedAt.String(),           // should in ISO 8601 format
+		},
 	})
 }
 

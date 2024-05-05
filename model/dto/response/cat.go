@@ -17,6 +17,18 @@ type CatResponse struct {
 	CreatedAt   time.Time `json:"createdAt"`
 }
 
+type CatResponseString struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Race        string `json:"race"`
+	Sex         string `json:"sex"`
+	AgeInMonth  string `json:"ageInMonth"`
+	ImageURLs   string `json:"imageUrls"`
+	Description string `json:"description"`
+	HasMatched  string `json:"hasMatched"`
+	CreatedAt   string `json:"createdAt"`
+}
+
 type CreateCatResponse struct {
 	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"createdAt"`
