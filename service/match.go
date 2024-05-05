@@ -40,8 +40,8 @@ func (s *matchService) GetMatches(userId int) ([]response.MatchResponse, error) 
 }
 
 func (s *matchService) Create(userId int, matchRequest request.MatchRequest) (model.Match, error) {
-	matchCat, matchCatError := s.catRepository.FindByID(strconv.Itoa(matchRequest.MatchCatID))
-	userCat, userCatError := s.catRepository.FindByID(strconv.Itoa(matchRequest.UserCatID))
+	matchCat, matchCatError := s.catRepository.FindByID(matchRequest.MatchCatID)
+	userCat, userCatError := s.catRepository.FindByID(matchRequest.UserCatID)
 
 	match := model.Match{
 		MatchCatID: matchRequest.MatchCatID,
@@ -95,7 +95,7 @@ func (s *matchService) Approval(userId int, matchId int, isAprrove bool) (int, e
 		return matchId, errors.New("MATCHID IS NO LONGER VALID")
 	}
 
-	matchCat, _ := s.catRepository.FindByID(strconv.Itoa(match.MatchCatID))
+	matchCat, _ := s.catRepository.FindByID(match.MatchCatID)
 	if matchCat.UserID != userId {
 		return matchId, errors.New("THE MATCH CAT OWNER IS NOT SAME")
 	}

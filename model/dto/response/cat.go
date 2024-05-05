@@ -6,7 +6,7 @@ import (
 )
 
 type CatResponse struct {
-	ID          int       `json:"id"`
+	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Race        enum.Race `json:"race"`
 	Sex         enum.Sex  `json:"sex"`
