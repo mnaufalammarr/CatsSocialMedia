@@ -33,7 +33,7 @@ func NewCatRepository(db *pgx.Conn) *catRepository {
 }
 
 func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error) {
-	query := "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE 1=1"
+	query := "SELECT id, name, race, sex, age_in_month, description, image_urls, created_at FROM cats WHERE 1=1"
 	var args []interface{}
 
 	if catID, ok := filterParams["id"].(string); ok && catID != "" {
@@ -41,7 +41,7 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 		args = append(args, catID)
 	}
 
-	if race, ok := filterParams["race"].(enum.Race); ok && race != "" {
+	if race, ok := filterParams["race"].(string); ok && race != "" {
 		query += fmt.Sprintf(" AND race = '%s'", race)
 	}
 
@@ -67,7 +67,7 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 			comparison = "="
 			age, _ = strconv.Atoi(ageInMonth)
 		}
-		query += fmt.Sprintf(" AND age_in_months %s %d", comparison, age)
+		query += fmt.Sprintf(" AND age_in_month %s %d", comparison, age)
 	}
 
 	if owned, ok := filterParams["owned"].(bool); ok {
@@ -83,6 +83,8 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 	if search, ok := filterParams["search"].(string); ok && search != "" {
 		query += fmt.Sprintf(" AND name ILIKE '%%%s%%'", search)
 	}
+
+	query += (" ORDER BY id DESC ")
 
 	if limit, ok := filterParams["limit"].(int); ok && limit > 0 {
 		query += " LIMIT $2"
@@ -103,28 +105,33 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 	var cats []response.CatResponse
 	for rows.Next() {
 		var cat model.Cat
-		err := rows.Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
+		err := rows.Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonth, &cat.Description, &cat.ImageUrls, &cat.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
+		createdAtISO8601 := cat.CreatedAt.Format(time.RFC3339)
 		catResponse := response.CatResponse{
 			ID:          cat.ID,
 			Name:        cat.Name,
 			Race:        cat.Race,
 			Sex:         cat.Sex,
-			AgeInMonth:  cat.AgeInMonths,
+			AgeInMonth:  cat.AgeInMonth,
 			ImageURLs:   cat.ImageUrls,
 			Description: cat.Description,
 			HasMatched:  cat.HasMatch,
+			CreatedAt:   createdAtISO8601,
 		}
 		cats = append(cats, catResponse)
+	}
+	if cats == nil {
+		cats = make([]response.CatResponse, 0)
 	}
 	return cats, nil
 }
 
 func (r *catRepository) FindByID(catID string) (model.Cat, error) {
 	var cat model.Cat
-	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, has_match, description, image_urls, user_id FROM cats WHERE id = $1", catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.HasMatch, &cat.Description, &cat.ImageUrls, &cat.UserID)
+	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_month, has_match, description, image_urls, user_id FROM cats WHERE id = $1", catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonth, &cat.HasMatch, &cat.Description, &cat.ImageUrls, &cat.UserID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Cat{}, nil // Kucing tidak ditemukan, tidak ada error
@@ -136,7 +143,7 @@ func (r *catRepository) FindByID(catID string) (model.Cat, error) {
 
 func (r *catRepository) FindByUserID(i int) (model.Cat, error) {
 	var cat model.Cat
-	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE user_id = $1", i).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
+	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_month, description, image_urls FROM cats WHERE user_id = $1", i).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonth, &cat.Description, &cat.ImageUrls)
 	fmt.Println(err)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -149,7 +156,7 @@ func (r *catRepository) FindByUserID(i int) (model.Cat, error) {
 
 func (r *catRepository) FindByIDAndUserID(catID string, userID int) (model.Cat, error) {
 	var cat model.Cat
-	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_months, description, image_urls FROM cats WHERE user_id = $1 and id = $2", userID, catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonths, &cat.Description, &cat.ImageUrls)
+	err := r.db.QueryRow(context.Background(), "SELECT id, name, race, sex, age_in_month, description, image_urls FROM cats WHERE user_id = $1 and id = $2", userID, catID).Scan(&cat.ID, &cat.Name, &cat.Race, &cat.Sex, &cat.AgeInMonth, &cat.Description, &cat.ImageUrls)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Cat{}, nil // Kucing tidak ditemukan, tidak ada error
@@ -162,7 +169,7 @@ func (r *catRepository) FindByIDAndUserID(catID string, userID int) (model.Cat, 
 func (r *catRepository) Create(cat model.Cat) (response.CreateCatResponse, error) {
 	var id string
 	var createdAt time.Time
-	err := r.db.QueryRow(context.Background(), "INSERT INTO cats (name, race, sex, age_in_months, description, image_urls, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, created_at", cat.Name, cat.Race, cat.Sex, cat.AgeInMonths, cat.Description, cat.ImageUrls, cat.UserID).Scan(&id, &createdAt)
+	err := r.db.QueryRow(context.Background(), "INSERT INTO cats (name, race, sex, age_in_month, description, image_urls, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, created_at", cat.Name, cat.Race, cat.Sex, cat.AgeInMonth, cat.Description, cat.ImageUrls, cat.UserID).Scan(&id, &createdAt)
 	if err != nil {
 		return response.CreateCatResponse{}, err
 	}
@@ -180,7 +187,7 @@ func (r *catRepository) Create(cat model.Cat) (response.CreateCatResponse, error
 }
 
 func (r *catRepository) Update(cat model.Cat) (model.Cat, error) {
-	_, err := r.db.Exec(context.Background(), "UPDATE cats SET name = $1, race = $2, sex = $3, age_in_months = $4, description = $5, image_urls = $6 WHERE id = $7", cat.Name, cat.Race, cat.Sex, cat.AgeInMonths, cat.Description, cat.ImageUrls, cat.ID)
+	_, err := r.db.Exec(context.Background(), "UPDATE cats SET name = $1, race = $2, sex = $3, age_in_month = $4, description = $5, image_urls = $6 WHERE id = $7", cat.Name, cat.Race, cat.Sex, cat.AgeInMonth, cat.Description, cat.ImageUrls, cat.ID)
 	if err != nil {
 		return model.Cat{}, err
 	}
