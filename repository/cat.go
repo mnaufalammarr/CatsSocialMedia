@@ -121,7 +121,7 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 			fmt.Println(err)
 			return nil, err
 		}
-		createdAtISO8601 := cat.CreatedAt.Format(time.RFC3339)
+		// createdAtISO8601 := cat.CreatedAt.Format(time.RFC3339)
 		catResponse := response.CatResponse{
 			ID:          cat.ID,
 			Name:        cat.Name,
@@ -131,7 +131,7 @@ func (r *catRepository) FindAll(filterParams map[string]interface{}) ([]response
 			ImageURLs:   cat.ImageUrls,
 			Description: cat.Description,
 			HasMatched:  cat.HasMatch,
-			CreatedAt:   createdAtISO8601,
+			CreatedAt:   cat.CreatedAt,
 		}
 		cats = append(cats, catResponse)
 	}
@@ -187,12 +187,12 @@ func (r *catRepository) Create(cat model.Cat) (response.CreateCatResponse, error
 	}
 
 	// Konversi waktu pembuatan ke format ISO 8601
-	createdAtISO8601 := createdAt.Format(time.RFC3339)
+	// createdAtISO8601 := createdAt.Format(time.RFC3339)
 
 	// Buat respons yang akan dikirimkan kembali
 	response := response.CreateCatResponse{
 		ID:        id,
-		CreatedAt: createdAtISO8601,
+		CreatedAt: createdAt,
 	}
 
 	return response, nil
