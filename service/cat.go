@@ -6,6 +6,7 @@ import (
 	"CatsSocialMedia/model/dto/response"
 	"CatsSocialMedia/repository"
 	"errors"
+	"fmt"
 )
 
 type CatService interface {
@@ -28,6 +29,7 @@ func NewCatService(repository repository.CatRepository, matchService MatchServic
 }
 
 func (s *catService) FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error) {
+	fmt.Println(filterParams)
 	cats, err := s.repository.FindAll(filterParams)
 	if err != nil {
 		return nil, err
@@ -84,7 +86,7 @@ func (s *catService) Create(catRequest request.CatRequest) (response.CreateCatRe
 		Name:        catRequest.Name,
 		Race:        catRequest.Race,
 		Sex:         catRequest.Sex,
-		AgeInMonths: catRequest.AgeInMonths,
+		AgeInMonth:  catRequest.AgeInMonth,
 		Description: catRequest.Description,
 		ImageUrls:   catRequest.ImageUrls,
 		UserID:      catRequest.UserId,
@@ -116,7 +118,7 @@ func (s *catService) Update(catID string, catRequest request.CatRequest) (model.
 	existingCat.Name = catRequest.Name
 	existingCat.Race = catRequest.Race
 	existingCat.Sex = catRequest.Sex
-	existingCat.AgeInMonths = catRequest.AgeInMonths
+	existingCat.AgeInMonth = catRequest.AgeInMonth
 	existingCat.Description = catRequest.Description
 	existingCat.ImageUrls = catRequest.ImageUrls
 

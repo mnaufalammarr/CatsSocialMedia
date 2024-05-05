@@ -7,7 +7,7 @@ type CatRequest struct {
 	Name        string    `json:"name" binding:"required,min=1,max=30"`
 	Race        enum.Race `json:"race" binding:"required"`
 	Sex         enum.Sex  `json:"sex" binding:"required"`
-	AgeInMonths int       `json:"age_in_months" binding:"required,min=1,max=120082"`
+	AgeInMonth  int       `json:"ageInMonth" binding:"required,min=1,max=120082"`
 	Description string    `json:"description" binding:"required,min=1,max=200"`
-	ImageUrls   []string  `json:"image_urls" binding:"required,min=1,dive,url"`
+	ImageUrls   []string  `json:"imageUrls" binding:"required,min=1,dive,url"`
 }

@@ -18,6 +18,6 @@ type CatResponse struct {
 }
 
 type CreateCatResponse struct {
-	ID        string `json:"id"`
-	CreatedAt string `json:"createdAt"`
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
 }

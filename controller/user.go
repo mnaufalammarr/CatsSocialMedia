@@ -29,6 +29,7 @@ func (uC *userController) Signup(c *gin.Context) {
 	err := c.ShouldBindJSON(&signupRequest)
 
 	if err != nil {
+		fmt.Println(err.Error())
 		switch err.(type) {
 		case validator.ValidationErrors:
 			errorMessages := []string{}
@@ -63,6 +64,7 @@ func (uC *userController) Signup(c *gin.Context) {
 	user, err := uC.userService.Create(signupRequest)
 
 	if err != nil {
+		fmt.Println(err.Error())
 		var error string = err.Error()
 		if error == "EMAIL ALREADY EXIST" {
 			c.JSON(http.StatusConflict, gin.H{
@@ -84,9 +86,9 @@ func (uC *userController) Signup(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User Registered Successfully",
 		"data": map[string]string{
-			"email": user.Email,
-			"name":  user.Name,
-			"token": tokenString,
+			"email":       user.Email,
+			"name":        user.Name,
+			"accessToken": tokenString,
 		},
 	})
 }
@@ -147,9 +149,9 @@ func (uC *userController) SignIn(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User Logged Successfully",
 		"data": map[string]string{
-			"email": user.Email,
-			"name":  user.Name,
-			"token": tokenString,
+			"email":       user.Email,
+			"name":        user.Name,
+			"accessToken": tokenString,
 		},
 	})
 }

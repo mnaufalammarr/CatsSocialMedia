@@ -38,6 +38,16 @@ func (controller *catController) FindAll(c *gin.Context) {
 
 	userID, _ := utils.GetUserIDFromJWTClaims(c)
 
+	if c.Request.ContentLength > 0 {
+		// If there is a request body, return a 400 Bad Request status code
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "GET requests should not contain a request body",
+		})
+		// Abort the request to prevent further processing
+		c.Abort()
+		return
+	}
+
 	// Parse query parameters
 	for key, values := range c.Request.URL.Query() {
 		value := values[0] // We only use the first value if there are multiple values for the same key
@@ -102,6 +112,15 @@ func (controller *catController) FindAll(c *gin.Context) {
 func (controller *catController) FindByUserID(c *gin.Context) {
 	// Retrieve user ID from request or any other source
 	userID, _ := utils.GetUserIDFromJWTClaims(c)
+	if c.Request.ContentLength > 0 {
+		// If there is a request body, return a 400 Bad Request status code
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "GET requests should not contain a request body",
+		})
+		// Abort the request to prevent further processing
+		c.Abort()
+		return
+	}
 
 	cat, err := controller.catService.FindByUserID(userID)
 	if err != nil {
