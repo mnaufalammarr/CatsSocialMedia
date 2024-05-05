@@ -31,14 +31,13 @@ func NewCatService(repository repository.CatRepository, matchService MatchServic
 	return &catService{repository, matchService}
 }
 
-func (s *catService) FindAll(filterParams map[string]interface{}) ([]response.CatResponseString, error) {
+func (s *catService) FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error) {
 	fmt.Println(filterParams)
 	cats, err := s.repository.FindAll(filterParams)
 	if err != nil {
 		return nil, err
 	}
-	catString := s.CovertToString(cats)
-	return catString, nil
+	return cats, nil
 }
 
 func (s *catService) FindByID(catID string) (model.Cat, error) {

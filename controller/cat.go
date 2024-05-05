@@ -99,6 +99,7 @@ func (controller *catController) FindAll(c *gin.Context) {
 	fmt.Println(filterParams)
 	// Call service to get cats with filters
 	cats, err := controller.catService.FindAll(filterParams)
+	catsString := controller.catService.ConverToString(cats)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
@@ -106,7 +107,7 @@ func (controller *catController) FindAll(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "success",
-		"data":    cats,
+		"data":    catsString,
 	})
 }
 
