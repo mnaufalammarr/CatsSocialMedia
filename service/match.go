@@ -53,7 +53,7 @@ func (s *matchService) Create(userId int, matchRequest request.MatchRequest) (mo
 
 	fmt.Println(userCat.UserID)
 	fmt.Println(userId)
-	if userCat.UserID != userId {
+	if matchCat.UserID != userId {
 		return match, errors.New("THE USER CAT IS NOT BELONG TO THE USER")
 	}
 
