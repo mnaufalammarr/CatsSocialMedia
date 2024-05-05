@@ -6,6 +6,7 @@ import (
 	"CatsSocialMedia/model/dto/response"
 	"CatsSocialMedia/repository"
 	"errors"
+	"fmt"
 )
 
 type CatService interface {
@@ -28,6 +29,7 @@ func NewCatService(repository repository.CatRepository, matchService MatchServic
 }
 
 func (s *catService) FindAll(filterParams map[string]interface{}) ([]response.CatResponse, error) {
+	fmt.Println(filterParams)
 	cats, err := s.repository.FindAll(filterParams)
 	if err != nil {
 		return nil, err

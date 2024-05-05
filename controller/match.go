@@ -2,6 +2,7 @@ package controller
 
 import (
 	"CatsSocialMedia/model/dto/request"
+	"CatsSocialMedia/model/dto/response"
 	"CatsSocialMedia/service"
 	"CatsSocialMedia/utils"
 	"encoding/json"
@@ -25,6 +26,14 @@ func (controller *matchController) GetMatches(c *gin.Context) {
 	matches, err := controller.matchService.GetMatches(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	if matches == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "success",
+			"data":    []response.MatchResponse{},
+		})
 		return
 	}
 
