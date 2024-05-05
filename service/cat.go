@@ -19,7 +19,7 @@ type CatService interface {
 	Create(catRequest request.CatRequest) (response.CreateCatResponse, error)
 	Update(catID string, catRequest request.CatRequest) (model.Cat, error)
 	Delete(catID string, userID int) error
-	ConverToString(cat []response.CatResponse) []response.CatResponseString
+	//ConverToString(cat []response.CatResponse) []response.CatResponseString
 }
 
 type catService struct {
@@ -139,7 +139,7 @@ func (s *catService) Delete(catID string, userID int) error {
 	return err
 }
 
-func (s *catService) CovertToString(cat []response.CatResponse) []response.CatResponseString {
+func CovertToString(cat []response.CatResponse) []response.CatResponseString {
 	var cats []response.CatResponseString
 	for _, v := range cat {
 		catString := response.CatResponseString{
