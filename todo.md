@@ -7,7 +7,7 @@
       - [x] validation
       - [x] response
     - update  :
-      - [_] validation - kurang validation sex
+      - [x] validation
       - [x] response
     - delete  :
       - [x] validation
