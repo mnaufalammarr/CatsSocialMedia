@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type CatRepository interface {
@@ -25,10 +26,10 @@ type CatRepository interface {
 	UpdateHasMatch(id string, isHasMatch bool) (string, error)
 }
 type catRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewCatRepository(db *pgx.Conn) *catRepository {
+func NewCatRepository(db *pgxpool.Pool) *catRepository {
 	return &catRepository{db}
 }
 

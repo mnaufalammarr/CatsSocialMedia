@@ -2,11 +2,11 @@ package main
 
 import (
 	"CatsSocialMedia/controller"
-	"CatsSocialMedia/db"
 	"CatsSocialMedia/middleware"
 	"CatsSocialMedia/repository"
 	"CatsSocialMedia/service"
 	"CatsSocialMedia/utils"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,13 +14,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var conn *pgx.Conn
-
-func init() {
-	var err error
+func initDB() *pgxpool.Pool {
 
 	utils.LoadEnvVariables()
 	// urlDb := os.Getenv("DATABASE_URL")
@@ -32,16 +29,19 @@ func init() {
 	// dbParams := os.Getenv("DB_PARAMS")
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", dbUsername, dbPassword, dbHost, dbPort, dbName)
 
-	conn, err = db.ConnectToDatabase(dbURL)
+	conn, err := pgxpool.New(context.Background(), dbURL)
+
 	if err != nil {
 		log.Fatal("db connection failed")
 	}
+
+	return conn
 }
 
 func main() {
-	userRepository := repository.NewUserRepository(conn)
-	catRepository := repository.NewCatRepository(conn)
-	matchRepository := repository.NewMatchRepository(conn)
+	userRepository := repository.NewUserRepository(initDB())
+	catRepository := repository.NewCatRepository(initDB())
+	matchRepository := repository.NewMatchRepository(initDB())
 
 	userService := service.NewUserService(userRepository)
 	userController := controller.NewUserController(userService)
