@@ -50,6 +50,7 @@ func (s *userService) Create(signupRequest request.SignupRequest) (model.User, e
 	}
 
 	newUser, err := s.repository.Create(user)
+
 	return newUser, err
 }
 
